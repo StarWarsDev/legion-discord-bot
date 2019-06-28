@@ -12,13 +12,15 @@ import (
 )
 
 var (
-	token string
+	token      string
+	legionData *LegionData
 )
 
 func init() {
-
 	flag.StringVar(&token, "t", "", "Bot Token")
 	flag.Parse()
+
+	legionData = loadLegionData()
 }
 
 func main() {
@@ -126,7 +128,66 @@ func lookupUpgrade(upgradeName string) []string {
 }
 
 func lookupCommand(commandName string) []string {
-	cardInfo := []string{"In Soviet Russia " + commandName + " plays you!"}
+	cardInfo := []string{}
+
+	for _, card := range legionData.CommandCards {
+		if strings.ToLower(card.Name) == strings.ToLower(commandName) {
+
+			/*
+			   {
+			   	"ldf":"zxflameprojector",
+			   	"name":"ZX Flame Projector",
+			   	"pips":2,
+			   	"orders":"Boba Fett",
+			   	"description":"During Boba Fett's activation he gains the following weapons:",
+			   	"weapon":{
+			   		"range":{
+			   			"from":0,
+			   			"to":1
+			   		},
+			   		"dice":{
+			   			"red":1
+			   		},
+			   		"keywords":["Blast","Spray"]
+			   	}
+			   }
+			*/
+
+			cardInfo = []string{
+				"Name: " + card.Name,
+				fmt.Sprintf("Pips: %d", card.Pips),
+				"Orders: " + card.Orders,
+			}
+
+			if len(card.Description) > 0 {
+				cardInfo = append(cardInfo, "Description: "+card.Description)
+			}
+
+			diceCount := card.Weapon.Dice.White + card.Weapon.Dice.Black + card.Weapon.Dice.Red
+			if diceCount > 0 {
+				weaponInfo := []string{"Weapon:"}
+				if len(card.Weapon.Name) > 0 {
+					weaponInfo = append(weaponInfo, "  "+card.Weapon.Name)
+				}
+
+				weaponInfo = append(weaponInfo, fmt.Sprintf("  Range: %d - %d", card.Weapon.Range.From, card.Weapon.Range.To))
+				weaponInfo = append(weaponInfo, fmt.Sprintf("  Dice: white: %d, black: %d, red: %d", card.Weapon.Dice.White, card.Weapon.Dice.Black, card.Weapon.Dice.Red))
+
+				if len(card.Weapon.Keywords) > 0 {
+					keywords := strings.Join(card.Weapon.Keywords, ", ")
+					weaponInfo = append(weaponInfo, "  Keywords: "+keywords)
+				}
+
+				cardInfo = append(cardInfo, weaponInfo...)
+			}
+
+			return cardInfo
+		}
+	}
+
+	if len(cardInfo) == 0 {
+		cardInfo = []string{"Nothing found for \"" + commandName + "\""}
+	}
 
 	return cardInfo
 }
