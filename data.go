@@ -8,18 +8,61 @@ import (
 
 // LegionData is a container for all Legion data
 type LegionData struct {
-	Units        []*Unit
+	Units        *Units
 	Upgrades     *Upgrades
 	CommandCards []*CommandCard
 }
 
-// Unit is a Legion unit card
-type Unit struct {
-	LDF  string `json:"ldf"`
-	Name string
+// Units is a container of all the different unit types
+type Units struct {
+	Commander     []*Unit
+	Operative     []*Unit
+	Corps         []*Unit
+	SpecialForces []*Unit `json:"Special Forces"`
+	Support       []*Unit
+	Heavy         []*Unit
 }
 
-// Upgrades is a container of al the different upgrade types
+// Flattened returns a flat slice of units regardless of type
+func (u *Units) Flattened() (units []*Unit) {
+	units = append(units, u.Commander...)
+	units = append(units, u.Operative...)
+	units = append(units, u.Corps...)
+	units = append(units, u.SpecialForces...)
+	units = append(units, u.Support...)
+	units = append(units, u.Heavy...)
+
+	return
+}
+
+// Unit is a Legion unit card
+type Unit struct {
+	LDF          string `json:"ldf"`
+	Name         string
+	Subtitle     string
+	Type         string
+	Points       int
+	Rank         string
+	Minis        int
+	Wounds       int
+	Courage      int
+	Defense      string
+	Surge        *Surge
+	Speed        int
+	Slots        []string
+	Keywords     []*Keyword
+	Weapons      []*Weapon
+	CommandCards []string
+	Unique       bool
+}
+
+// Surge denotes which kinds of surges a unit has
+type Surge struct {
+	Attack  string
+	Defense string
+}
+
+// Upgrades is a container of all the different upgrade types
 type Upgrades struct {
 	Armament    []*Upgrade
 	Command     []*Upgrade

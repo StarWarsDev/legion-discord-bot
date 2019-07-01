@@ -118,25 +118,45 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func lookupUnit(unitName string) []string {
-	cardInfo := []string{"Your mom is " + unitName}
+	cardInfo := []string{}
+	uName := cleanName(unitName)
+
+	units := legionData.Units.Flattened()
+	for _, unit := range units {
+		name := cleanName(unit.Name)
+
+		if name == uName {
+			cardInfo = []string{
+				"Name: " + unit.Name,
+				withDigits("Points: %d", unit.Points),
+				"Type: " + unit.Type,
+				"Rank: " + unit.Rank,
+				withDigits("Minis: %d", unit.Minis),
+			}
+
+			return cardInfo
+		}
+	}
+
+	if len(cardInfo) == 0 {
+		cardInfo = []string{"Nothing found for \"" + unitName + "\""}
+	}
 
 	return cardInfo
 }
 
 func lookupUpgrade(upgradeName string) []string {
 	cardInfo := []string{}
-	upgrName := strings.ToLower(upgradeName)
-	upgrName = justAlphanumeric(upgrName)
+	upgrName := cleanName(upgradeName)
 
 	upgrades := legionData.Upgrades.Flattened()
 	for _, upgrade := range upgrades {
-		uName := strings.ToLower(upgrade.Name)
-		uName = justAlphanumeric(uName)
+		uName := cleanName(upgrade.Name)
 
 		if upgrName == uName {
 			cardInfo = []string{
 				"Name: " + upgrade.Name,
-				fmt.Sprintf("Points: %d", upgrade.Points),
+				withDigits("Points: %d", upgrade.Points),
 				"Slot: " + upgrade.Slot,
 			}
 
@@ -167,8 +187,8 @@ func lookupUpgrade(upgradeName string) []string {
 					weaponInfo = append(weaponInfo, "  "+upgrade.Weapon.Name)
 				}
 
-				weaponInfo = append(weaponInfo, fmt.Sprintf("  Range: %d - %d", upgrade.Weapon.Range.From, upgrade.Weapon.Range.To))
-				weaponInfo = append(weaponInfo, fmt.Sprintf("  Dice: white: %d, black: %d, red: %d", upgrade.Weapon.Dice.White, upgrade.Weapon.Dice.Black, upgrade.Weapon.Dice.Red))
+				weaponInfo = append(weaponInfo, withDigits("  Range: %d - %d", upgrade.Weapon.Range.From, upgrade.Weapon.Range.To))
+				weaponInfo = append(weaponInfo, withDigits("  Dice: white: %d, black: %d, red: %d", upgrade.Weapon.Dice.White, upgrade.Weapon.Dice.Black, upgrade.Weapon.Dice.Red))
 
 				if len(upgrade.Weapon.Keywords) > 0 {
 					keywords := []string{}
@@ -180,6 +200,8 @@ func lookupUpgrade(upgradeName string) []string {
 
 				cardInfo = append(cardInfo, weaponInfo...)
 			}
+
+			return cardInfo
 		}
 	}
 
@@ -192,12 +214,10 @@ func lookupUpgrade(upgradeName string) []string {
 
 func lookupCommand(commandName string) []string {
 	cardInfo := []string{}
-	cName := strings.ToLower(commandName)
-	cName = justAlphanumeric(cName)
+	cName := cleanName(commandName)
 
 	for _, card := range legionData.CommandCards {
-		cardName := strings.ToLower(card.Name)
-		cardName = justAlphanumeric(cardName)
+		cardName := cleanName(card.Name)
 		if cardName == cName {
 			cardInfo = []string{
 				"Name: " + card.Name,
@@ -238,6 +258,12 @@ func lookupCommand(commandName string) []string {
 	return cardInfo
 }
 
+func cleanName(in string) (out string) {
+	out = strings.ToLower(in)
+	out = justAlphanumeric(out)
+	return
+}
+
 func justAlphanumeric(in string) (out string) {
 	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
 	if err != nil {
@@ -246,5 +272,10 @@ func justAlphanumeric(in string) (out string) {
 
 	out = reg.ReplaceAllString(in, "")
 
+	return
+}
+
+func withDigits(tmpl string, digits ...int) (out string) {
+	out = fmt.Sprintf(tmpl, digits)
 	return
 }
