@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
+	"regexp"
 	"strings"
 	"syscall"
 
@@ -129,30 +131,13 @@ func lookupUpgrade(upgradeName string) []string {
 
 func lookupCommand(commandName string) []string {
 	cardInfo := []string{}
+	commandName = strings.ToLower(commandName)
+	commandName = justAlphanumeric(commandName)
 
 	for _, card := range legionData.CommandCards {
-		if strings.ToLower(card.Name) == strings.ToLower(commandName) {
-
-			/*
-			   {
-			   	"ldf":"zxflameprojector",
-			   	"name":"ZX Flame Projector",
-			   	"pips":2,
-			   	"orders":"Boba Fett",
-			   	"description":"During Boba Fett's activation he gains the following weapons:",
-			   	"weapon":{
-			   		"range":{
-			   			"from":0,
-			   			"to":1
-			   		},
-			   		"dice":{
-			   			"red":1
-			   		},
-			   		"keywords":["Blast","Spray"]
-			   	}
-			   }
-			*/
-
+		cardName := strings.ToLower(card.Name)
+		cardName = justAlphanumeric(cardName)
+		if cardName == commandName {
 			cardInfo = []string{
 				"Name: " + card.Name,
 				fmt.Sprintf("Pips: %d", card.Pips),
@@ -190,4 +175,15 @@ func lookupCommand(commandName string) []string {
 	}
 
 	return cardInfo
+}
+
+func justAlphanumeric(in string) (out string) {
+	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	out = reg.ReplaceAllString(in, "")
+
+	return
 }
