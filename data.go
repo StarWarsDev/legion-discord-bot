@@ -46,6 +46,7 @@ type Unit struct {
 	Minis        int
 	Wounds       int
 	Courage      int
+	Resilience   int
 	Defense      string
 	Surge        *Surge
 	Speed        int
