@@ -61,9 +61,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if m.Content == "!help" {
 		helpText := []string{
-			"!unit <unit card name> - Displays information about the specified unit (WIP)",
-			"!upgrade <upgrade card name> - Displays information about the specified upgrade (WIP)",
-			"!command <command card name> - Displays information about the specified command card (WIP)",
+			"!unit <unit card name> - Displays information about the specified unit",
+			"!upgrade <upgrade card name> - Displays information about the specified upgrade",
+			"!command <command card name> - Displays information about the specified command card",
 			"!gonk - GONK",
 			"!help - This help message",
 		}
