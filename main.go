@@ -10,12 +10,18 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/blevesearch/bleve"
 	"github.com/bwmarrin/discordgo"
+)
+
+const (
+	IndexKey = "legion.data"
 )
 
 var (
 	token      string
 	legionData *LegionData
+	index      bleve.Index
 )
 
 func init() {
@@ -23,6 +29,26 @@ func init() {
 	flag.Parse()
 
 	legionData = loadLegionData()
+
+	// index the data for searching
+	mapping := bleve.NewIndexMapping()
+	i, err := bleve.New(IndexKey, mapping)
+	if err != nil {
+		if err == bleve.ErrorIndexPathExists {
+			fmt.Println("Found an existing index, reusing it...")
+			i, err = bleve.Open(IndexKey)
+
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			panic(err)
+		}
+	}
+
+	index = i
+
+	setupIndex()
 }
 
 func main() {
@@ -50,6 +76,7 @@ func main() {
 
 	// Cleanly close down the Discord session.
 	discord.Close()
+	os.RemoveAll(IndexKey)
 }
 
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -64,6 +91,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			"!unit <unit card name> - Displays information about the specified unit",
 			"!upgrade <upgrade card name> - Displays information about the specified upgrade",
 			"!command <command card name> - Displays information about the specified command card",
+			"!search <search term> - Displays search results across all data",
 			"!gonk - GONK",
 			"!help - This help message",
 		}
@@ -115,6 +143,21 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		s.ChannelMessageSend(m.ChannelID, response)
 	}
+
+	if strings.HasPrefix(m.Content, "!search") {
+		searchText := strings.Replace(m.Content, "!search", "", 1)
+		searchText = strings.TrimSpace(searchText)
+
+		var response string
+		if len(searchText) == 0 {
+			response = m.Author.Mention() + ", the `!search` command requires a search term. Please try again using this format `!command <search term>`"
+		} else {
+			response = "```" + strings.Join(fullSearch(searchText), "\n") + "```"
+		}
+
+		s.ChannelMessageSend(m.ChannelID, response)
+	}
+
 }
 
 func lookupUnit(unitName string) []string {
@@ -320,6 +363,47 @@ func lookupCommand(commandName string) []string {
 	return cardInfo
 }
 
+func fullSearch(text string) []string {
+	resultText := []string{}
+	query := bleve.NewMatchQuery(text)
+	search := bleve.NewSearchRequest(query)
+	searchResults, err := index.Search(search)
+	if err != nil {
+		fmt.Println(err)
+
+		// return a message to the user that there was an error
+		resultText = append(resultText, "There was an error searching for "+text)
+		return resultText
+	}
+
+	resultText = append(
+		resultText,
+		withTemplate("%d matches found for \"%s\" in %v```\n```", searchResults.Total, text, searchResults.Took),
+	)
+
+	for _, hit := range searchResults.Hits {
+		id := strings.Split(hit.ID, ".")
+		hitType := id[0]
+		ldf := id[1]
+
+		switch hitType {
+		case "commandcard":
+			resultText = append(resultText, lookupCommand(ldf)...)
+			resultText = append(resultText, "```\n```")
+		case "unit":
+			resultText = append(resultText, lookupUnit(ldf)...)
+			resultText = append(resultText, "```\n```")
+		case "upgrade":
+			resultText = append(resultText, lookupUpgrade(ldf)...)
+			resultText = append(resultText, "```\n```")
+		}
+	}
+
+	resultText = append(resultText, "End of search results")
+
+	return resultText
+}
+
 func lookupCommandCardByLdf(ldf string) *CommandCard {
 	for _, card := range legionData.CommandCards {
 		if ldf == card.LDF {
@@ -390,4 +474,28 @@ func diceString(dice *AttackDice) string {
 	}
 
 	return strings.Join(str, ", ")
+}
+
+func setupIndex() {
+	indexCommandCards()
+	indexUpgrades()
+	indexUnits()
+}
+
+func indexCommandCards() {
+	for _, card := range legionData.CommandCards {
+		index.Index("commandcard."+card.LDF, card)
+	}
+}
+
+func indexUpgrades() {
+	for _, card := range legionData.Upgrades.Flattened() {
+		index.Index("upgrade."+card.LDF, card)
+	}
+}
+
+func indexUnits() {
+	for _, card := range legionData.Units.Flattened() {
+		index.Index("unit."+card.LDF, card)
+	}
 }

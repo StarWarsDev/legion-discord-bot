@@ -1,4 +1,5 @@
 BINARY_NAME=legion-discord-bot
+TOKEN=your_mom_has_a_token
 
 GITCMD=git
 GITCLONE=$(GITCMD) clone
@@ -24,6 +25,9 @@ generate-json: checkout-legion-data
 
 build:
 	$(GOBUILD) .
+
+run:
+	./$(BINARY_NAME) -t $(TOKEN)
 
 clean:
 	rm -f ./$(BINARY_NAME)
