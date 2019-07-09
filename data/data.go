@@ -1,4 +1,4 @@
-package main
+package data
 
 import (
 	"encoding/json"
@@ -159,7 +159,7 @@ type AttackDice struct {
 	Red   int
 }
 
-func loadLegionData() *LegionData {
+func LoadLegionData() *LegionData {
 	// read the legion-data.json file
 	jsonFile, err := os.Open("./legion-data.json")
 
