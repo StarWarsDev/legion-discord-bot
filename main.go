@@ -24,6 +24,16 @@ var (
 func init() {
 	flag.StringVar(&token, "t", "", "Bot Token")
 	flag.Parse()
+
+	if token == "" {
+		// no token was assigned via the t flag, try looking in the environment
+		token = os.Getenv("DISCORD_TOKEN")
+	}
+
+	if token == "" {
+		// still no token, panic!
+		panic("No discord token provided! Try passing it with the '-t' flag or setting 'DISCORD_TOKEN' in the environment.")
+	}
 }
 
 func main() {
