@@ -6,8 +6,10 @@ import (
 
 	"github.com/StarWarsDev/legion-discord-bot/data"
 	"github.com/StarWarsDev/legion-discord-bot/lookup"
+	"github.com/StarWarsDev/legion-discord-bot/output"
 	"github.com/StarWarsDev/legion-discord-bot/utils"
 	"github.com/blevesearch/bleve"
+	"github.com/bwmarrin/discordgo"
 )
 
 const (
@@ -71,8 +73,8 @@ func (util *Util) indexUnits() {
 }
 
 // FullSearch performs a full text search against all legion data
-func (util *Util) FullSearch(text string) []string {
-	resultText := []string{}
+func (util *Util) FullSearch(text string) []*discordgo.MessageEmbed {
+	results := []*discordgo.MessageEmbed{}
 	query := bleve.NewMatchQuery(text)
 	search := bleve.NewSearchRequest(query)
 	searchResults, err := util.index.Search(search)
@@ -80,14 +82,9 @@ func (util *Util) FullSearch(text string) []string {
 		fmt.Println(err)
 
 		// return a message to the user that there was an error
-		resultText = append(resultText, "There was an error searching for "+text)
-		return resultText
+		results = append(results, output.Error("No results", "There was an error searching for "+text))
+		return results
 	}
-
-	resultText = append(
-		resultText,
-		utils.WithTemplate("%d matches found for \"%s\" in %v```\n```", searchResults.Total, text, searchResults.Took),
-	)
 
 	for _, hit := range searchResults.Hits {
 		id := strings.Split(hit.ID, ".")
@@ -96,18 +93,44 @@ func (util *Util) FullSearch(text string) []string {
 
 		switch hitType {
 		case "commandcard":
-			resultText = append(resultText, util.lookupUtil.LookupCommand(ldf)...)
-			resultText = append(resultText, "```\n```")
+			card := util.lookupUtil.LookupCommandCardByLdf(ldf)
+			results = append(results, output.CommandCard(card))
 		case "unit":
-			resultText = append(resultText, util.lookupUtil.LookupUnit(ldf)...)
-			resultText = append(resultText, "```\n```")
+			card := util.lookupUtil.LookupUnitByLdf(ldf)
+			if len(card.CommandCards) > 0 {
+				var commandCards []string
+				for _, ldf := range card.CommandCards {
+					card := util.lookupUtil.LookupCommandCardByLdf(ldf)
+					if card != nil {
+						commandCards = append(commandCards, card.Name)
+					}
+				}
+				card.CommandCards = commandCards
+			}
+			results = append(results, output.Unit(card))
 		case "upgrade":
-			resultText = append(resultText, util.lookupUtil.LookupUpgrade(ldf)...)
-			resultText = append(resultText, "```\n```")
+			card := util.lookupUtil.LookupUpgradeByLdf(ldf)
+			results = append(results, output.Upgrade(card))
 		}
 	}
 
-	resultText = append(resultText, "End of search results")
+	if searchResults.Total == 0 {
+		results = append(
+			results,
+			output.Error(
+				utils.WithTemplate("0 matches found for \"%s\"", text),
+				utils.WithTemplate("Took %v", searchResults.Took),
+			),
+		)
+	} else {
+		results = append(
+			results,
+			output.Info(
+				utils.WithTemplate("%d matches found for \"%s\"", len(results), text),
+				utils.WithTemplate("Took %v", searchResults.Took),
+			),
+		)
+	}
 
-	return resultText
+	return results
 }

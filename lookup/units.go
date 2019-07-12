@@ -3,6 +3,7 @@ package lookup
 import (
 	"strings"
 
+	"github.com/StarWarsDev/legion-discord-bot/data"
 	"github.com/StarWarsDev/legion-discord-bot/utils"
 )
 
@@ -95,4 +96,15 @@ func (util *Util) LookupUnit(unitName string) []string {
 	}
 
 	return cardInfo
+}
+
+// LookupUpgradeByLdf finds a upgrade card by its LDF value
+func (util *Util) LookupUnitByLdf(ldf string) *data.Unit {
+	for _, card := range util.legionData.Units.Flattened() {
+		if ldf == card.LDF {
+			return card
+		}
+	}
+
+	return nil
 }

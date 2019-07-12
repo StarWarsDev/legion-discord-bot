@@ -3,13 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math/rand"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/StarWarsDev/legion-discord-bot/data"
 	"github.com/StarWarsDev/legion-discord-bot/lookup"
+	"github.com/StarWarsDev/legion-discord-bot/output"
 	"github.com/StarWarsDev/legion-discord-bot/search"
 	"github.com/bwmarrin/discordgo"
 )
@@ -76,19 +79,68 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if m.Content == "!help" {
-		helpText := []string{
-			"!unit <unit card name> - Displays information about the specified unit",
-			"!upgrade <upgrade card name> - Displays information about the specified upgrade",
-			"!command <command card name> - Displays information about the specified command card",
-			"!search <search term> - Displays search results across all data",
-			"!gonk - GONK",
-			"!help - This help message",
+		fields := []*discordgo.MessageEmbedField{
+			&discordgo.MessageEmbedField{
+				Name:  "!unit <unit card name>",
+				Value: "Displays information about the specified unit",
+			},
+			&discordgo.MessageEmbedField{
+				Name:  "!upgrade <upgrade card name>",
+				Value: "Displays information about the specified upgrade",
+			},
+			&discordgo.MessageEmbedField{
+				Name:  "!command <command card name>",
+				Value: "Displays information about the specified command card",
+			},
+			&discordgo.MessageEmbedField{
+				Name:  "!search <search term>",
+				Value: "Displays search results across all data",
+			},
+			&discordgo.MessageEmbedField{
+				Name:  "!gonk",
+				Value: ":robot:",
+			},
+			&discordgo.MessageEmbedField{
+				Name:  "!lumpy",
+				Value: ":heart:",
+			},
+			&discordgo.MessageEmbedField{
+				Name:  "!help",
+				Value: "This help message",
+			},
 		}
-		s.ChannelMessageSend(m.ChannelID, "```"+strings.Join(helpText, "\n")+"```")
+
+		info := output.Info("", "")
+
+		info.Fields = fields
+		s.ChannelMessageSendEmbed(m.ChannelID, info)
 	}
 
 	if m.Content == "!gonk" {
-		s.ChannelMessageSend(m.ChannelID, "GONK")
+		e := output.Error("GONK!", "")
+		e.URL = "https://www.starwars.com/databank/gnk-droid"
+		e.Image = &discordgo.MessageEmbedImage{
+			URL: "https://lumiere-a.akamaihd.net/v1/images/gnk-droid-main-image_f0d89099.jpeg?region=0%2C80%2C1280%2C720",
+		}
+		s.ChannelMessageSendEmbed(m.ChannelID, e)
+	}
+
+	if m.Content == "!lumpy" {
+		urls := []string{
+			"https://media.giphy.com/media/PSnTTyw6BdjHy/giphy.gif",
+			"https://media.giphy.com/media/10QqGj0eqGOWIw/giphy.gif",
+			"https://media.giphy.com/media/FY5dT7KDV2i0o/giphy.gif",
+			"https://media.giphy.com/media/hffHBmxUSfHlm/giphy.gif",
+		}
+
+		rand.Seed(time.Now().Unix()) // initialize global pseudo random generator
+		randomLumpyURL := urls[rand.Intn(len(urls))]
+
+		s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
+			Image: &discordgo.MessageEmbedImage{
+				URL: randomLumpyURL,
+			},
+		})
 	}
 
 	if strings.HasPrefix(m.Content, "!unit") {
@@ -137,14 +189,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		searchText := strings.Replace(m.Content, "!search", "", 1)
 		searchText = strings.TrimSpace(searchText)
 
-		var response string
-		if len(searchText) == 0 {
-			response = m.Author.Mention() + ", the `!search` command requires a search term. Please try again using this format `!command <search term>`"
+		if searchText == "" {
+			response := m.Author.Mention() + ", the `!search` command requires a search term. Please try again using this format `!search <search term>`"
+			s.ChannelMessageSendEmbed(m.ChannelID, output.Error("Bad input", response))
 		} else {
-			response = "```" + strings.Join(searchUtil.FullSearch(searchText), "\n") + "```"
+			embeddedResults := searchUtil.FullSearch(searchText)
+			for _, embed := range embeddedResults {
+				s.ChannelMessageSendEmbed(m.ChannelID, embed)
+			}
 		}
-
-		s.ChannelMessageSend(m.ChannelID, response)
 	}
 
 }
