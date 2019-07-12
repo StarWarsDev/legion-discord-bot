@@ -147,42 +147,66 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		unitName := strings.Replace(m.Content, "!unit", "", 1)
 		unitName = strings.TrimSpace(unitName)
 
-		var response string
+		var response *discordgo.MessageEmbed
 		if len(unitName) == 0 {
-			response = m.Author.Mention() + ", the `!unit` command requires a unit card name. Please try again using this format `!unit <unit card name>`"
+			response = output.Error(
+				"Bad input",
+				m.Author.Mention()+", the `!unit` command requires a unit card name. Please try again using this format `!unit <unit card name>`",
+			)
 		} else {
-			response = "```" + strings.Join(lookupUtil.LookupUnit(unitName), "\n") + "```"
+			unit := lookupUtil.LookupUnit(unitName)
+			if unit != nil {
+				response = output.Unit(unit)
+			} else {
+				response = output.Error("No results found", "Nothing found for \""+unitName+"\"")
+			}
 		}
 
-		s.ChannelMessageSend(m.ChannelID, response)
+		s.ChannelMessageSendEmbed(m.ChannelID, response)
 	}
 
 	if strings.HasPrefix(m.Content, "!upgrade") {
 		upgradeName := strings.Replace(m.Content, "!upgrade", "", 1)
 		upgradeName = strings.TrimSpace(upgradeName)
 
-		var response string
+		var response *discordgo.MessageEmbed
 		if len(upgradeName) == 0 {
-			response = m.Author.Mention() + ", the `!upgrade` command requires an upgrade card name. Please try again using this format `!upgrade <upgrade card name>`"
+			response = output.Error(
+				"Bad input",
+				m.Author.Mention()+", the `!upgrade` command requires an upgrade card name. Please try again using this format `!upgrade <upgrade card name>`",
+			)
 		} else {
-			response = "```" + strings.Join(lookupUtil.LookupUpgrade(upgradeName), "\n") + "```"
+			upgrade := lookupUtil.LookupUpgrade(upgradeName)
+			if upgrade != nil {
+				response = output.Upgrade(upgrade)
+			} else {
+				response = output.Error("No results found", "Nothing found for \""+upgradeName+"\"")
+			}
 		}
 
-		s.ChannelMessageSend(m.ChannelID, response)
+		s.ChannelMessageSendEmbed(m.ChannelID, response)
 	}
 
 	if strings.HasPrefix(m.Content, "!command") {
 		commandName := strings.Replace(m.Content, "!command", "", 1)
 		commandName = strings.TrimSpace(commandName)
 
-		var response string
+		var response *discordgo.MessageEmbed
 		if len(commandName) == 0 {
-			response = m.Author.Mention() + ", the `!command` command requires a command card name. Please try again using this format `!command <command card name>`"
+			response = output.Error(
+				"Bad input",
+				m.Author.Mention()+", the `!command` command requires a command card name. Please try again using this format `!command <command card name>`",
+			)
 		} else {
-			response = "```" + strings.Join(lookupUtil.LookupCommand(commandName), "\n") + "```"
+			command := lookupUtil.LookupCommand(commandName)
+			if command != nil {
+				response = output.CommandCard(command)
+			} else {
+				response = output.Error("No results found", "Nothing found for \""+commandName+"\"")
+			}
 		}
 
-		s.ChannelMessageSend(m.ChannelID, response)
+		s.ChannelMessageSendEmbed(m.ChannelID, response)
 	}
 
 	if strings.HasPrefix(m.Content, "!search") {
