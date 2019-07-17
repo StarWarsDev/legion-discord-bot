@@ -114,8 +114,11 @@ func Unit(card *data.Unit) *discordgo.MessageEmbed {
 		field("Speed", int2Str(card.Speed)),
 		field("Slots", strings.Join(card.Slots, ", ")),
 		field("Keywords", joinKeywords(card.Keywords)),
-		field("Command Cards", strings.Join(card.CommandCards, ", ")),
 	)
+
+	if len(card.CommandCards) > 0 {
+		fields = append(fields, field("Command Cards", strings.Join(card.CommandCards, ", ")))
+	}
 
 	name := card.Name
 	if card.Unique {

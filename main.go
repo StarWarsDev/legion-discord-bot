@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"math/rand"
@@ -14,6 +15,7 @@ import (
 	"github.com/StarWarsDev/legion-discord-bot/lookup"
 	"github.com/StarWarsDev/legion-discord-bot/output"
 	"github.com/StarWarsDev/legion-discord-bot/search"
+	"github.com/StarWarsDev/legion-discord-bot/utils"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -80,31 +82,31 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if m.Content == "!help" {
 		fields := []*discordgo.MessageEmbedField{
-			&discordgo.MessageEmbedField{
+			{
 				Name:  "!unit <unit card name>",
 				Value: "Displays information about the specified unit",
 			},
-			&discordgo.MessageEmbedField{
+			{
 				Name:  "!upgrade <upgrade card name>",
 				Value: "Displays information about the specified upgrade",
 			},
-			&discordgo.MessageEmbedField{
+			{
 				Name:  "!command <command card name>",
 				Value: "Displays information about the specified command card",
 			},
-			&discordgo.MessageEmbedField{
+			{
 				Name:  "!search <search term>",
 				Value: "Displays search results across all data",
 			},
-			&discordgo.MessageEmbedField{
+			{
 				Name:  "!gonk",
 				Value: ":robot:",
 			},
-			&discordgo.MessageEmbedField{
+			{
 				Name:  "!lumpy",
 				Value: ":heart:",
 			},
-			&discordgo.MessageEmbedField{
+			{
 				Name:  "!help",
 				Value: "This help message",
 			},
@@ -113,7 +115,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		info := output.Info("", "")
 
 		info.Fields = fields
-		s.ChannelMessageSendEmbed(m.ChannelID, info)
+		channelMessageSendEmbed(s, m, info)
 	}
 
 	if m.Content == "!gonk" {
@@ -122,7 +124,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		e.Image = &discordgo.MessageEmbedImage{
 			URL: "https://lumiere-a.akamaihd.net/v1/images/gnk-droid-main-image_f0d89099.jpeg?region=0%2C80%2C1280%2C720",
 		}
-		s.ChannelMessageSendEmbed(m.ChannelID, e)
+		channelMessageSendEmbed(s, m, e)
 	}
 
 	if m.Content == "!lumpy" {
@@ -136,7 +138,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		rand.Seed(time.Now().Unix()) // initialize global pseudo random generator
 		randomLumpyURL := urls[rand.Intn(len(urls))]
 
-		s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
+		channelMessageSendEmbed(s, m, &discordgo.MessageEmbed{
 			Image: &discordgo.MessageEmbedImage{
 				URL: randomLumpyURL,
 			},
@@ -156,13 +158,24 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		} else {
 			unit := lookupUtil.LookupUnit(unitName)
 			if unit != nil {
+				// replace command card ldf values with names
+				if len(unit.CommandCards) > 0 {
+					var commandCards []string
+					for _, ldf := range unit.CommandCards {
+						card := lookupUtil.LookupCommandCardByLdf(ldf)
+						if card != nil {
+							commandCards = append(commandCards, card.Name)
+						}
+					}
+					unit.CommandCards = commandCards
+				}
 				response = output.Unit(unit)
 			} else {
 				response = output.Error("No results found", "Nothing found for \""+unitName+"\"")
 			}
 		}
 
-		s.ChannelMessageSendEmbed(m.ChannelID, response)
+		channelMessageSendEmbed(s, m, response)
 	}
 
 	if strings.HasPrefix(m.Content, "!upgrade") {
@@ -184,7 +197,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		}
 
-		s.ChannelMessageSendEmbed(m.ChannelID, response)
+		channelMessageSendEmbed(s, m, response)
 	}
 
 	if strings.HasPrefix(m.Content, "!command") {
@@ -206,7 +219,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		}
 
-		s.ChannelMessageSendEmbed(m.ChannelID, response)
+		channelMessageSendEmbed(s, m, response)
 	}
 
 	if strings.HasPrefix(m.Content, "!search") {
@@ -215,13 +228,32 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		if searchText == "" {
 			response := m.Author.Mention() + ", the `!search` command requires a search term. Please try again using this format `!search <search term>`"
-			s.ChannelMessageSendEmbed(m.ChannelID, output.Error("Bad input", response))
+			channelMessageSendEmbed(s, m, output.Error("Bad input", response))
 		} else {
 			embeddedResults := searchUtil.FullSearch(searchText)
 			for _, embed := range embeddedResults {
-				s.ChannelMessageSendEmbed(m.ChannelID, embed)
+				channelMessageSendEmbed(s, m, embed)
 			}
 		}
 	}
 
+}
+
+func channelMessageSendEmbed(s *discordgo.Session, m *discordgo.MessageCreate, embed *discordgo.MessageEmbed) {
+	_, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("Embedded item as follows")
+		fmt.Printf("%d Fields\n", len(embed.Fields))
+
+		b, err := json.Marshal(embed)
+		if err != nil {
+			fmt.Println("Could not unmarshal data")
+			fmt.Println(err)
+		}
+
+		fmt.Println(string(b))
+
+		s.ChannelMessageSendEmbed(m.ChannelID, output.Error("Failed to render", utils.WithTemplate("There was a problem rendering the %s \"%s\"", embed.Author.Name, embed.Title)))
+	}
 }
