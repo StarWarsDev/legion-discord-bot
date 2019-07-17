@@ -226,13 +226,18 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		searchText := strings.Replace(m.Content, "!search", "", 1)
 		searchText = strings.TrimSpace(searchText)
 
-		if searchText == "" {
-			response := m.Author.Mention() + ", the `!search` command requires a search term. Please try again using this format `!search <search term>`"
-			channelMessageSendEmbed(s, m, output.Error("Bad input", response))
+		if strings.ToLower(searchText) == "help" {
+			channelMessageSendEmbed(s, m, output.Info("Search Help", "Find more info on how to structure your search here: http://blevesearch.com/docs/Query-String-Query/"))
 		} else {
-			embeddedResults := searchUtil.FullSearch(searchText)
-			for _, embed := range embeddedResults {
-				channelMessageSendEmbed(s, m, embed)
+
+			if searchText == "" {
+				response := m.Author.Mention() + ", the `!search` command requires a search term. Please try again using this format `!search <search term>`"
+				channelMessageSendEmbed(s, m, output.Error("Bad input", response))
+			} else {
+				embeddedResults := searchUtil.FullSearch(searchText)
+				for _, embed := range embeddedResults {
+					channelMessageSendEmbed(s, m, embed)
+				}
 			}
 		}
 	}

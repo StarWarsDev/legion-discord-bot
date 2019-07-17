@@ -75,7 +75,7 @@ func (util *Util) indexUnits() {
 // FullSearch performs a full text search against all legion data
 func (util *Util) FullSearch(text string) []*discordgo.MessageEmbed {
 	results := []*discordgo.MessageEmbed{}
-	query := bleve.NewMatchQuery(text)
+	query := bleve.NewQueryStringQuery(text)
 	search := bleve.NewSearchRequest(query)
 	searchResults, err := util.index.Search(search)
 	if err != nil {
