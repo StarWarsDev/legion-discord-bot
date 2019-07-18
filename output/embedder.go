@@ -2,6 +2,7 @@ package output
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/StarWarsDev/legion-discord-bot/data"
@@ -16,11 +17,6 @@ const (
 	colorCommandCard = 0x4287f5
 	colorUpgrade     = 0x609c30
 	colorUnit        = 0xffffff
-	maxTitle         = 256
-	maxValue         = 1024
-	maxDescription   = 2048
-	maxEmbedLength   = 6000
-	maxNumFields     = 25
 	checkMark        = "✓"
 )
 
@@ -51,12 +47,17 @@ func CommandCard(card *data.CommandCard) *discordgo.MessageEmbed {
 		fields = append(fields, field("Weapon", weapon))
 	}
 
+	imageURL := "http://legion-hq.com/commands/" + url.PathEscape(card.Name) + ".png"
+
 	return &discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{Name: "Command"},
 		Title:       card.Name,
 		Description: card.Description,
 		Fields:      fields,
 		Color:       colorCommandCard,
+		Image: &discordgo.MessageEmbedImage{
+			URL: imageURL,
+		},
 	}
 }
 
@@ -84,12 +85,17 @@ func Upgrade(card *data.Upgrade) *discordgo.MessageEmbed {
 		fields = append(fields, field("Weapon", weapon))
 	}
 
+	imageURL := "http://legion-hq.com/upgrades/" + url.PathEscape(card.Name) + ".png"
+
 	return &discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{Name: "Upgrade"},
 		Title:       card.Name,
 		Description: card.Description,
 		Color:       colorUpgrade,
 		Fields:      fields,
+		Image: &discordgo.MessageEmbedImage{
+			URL: imageURL,
+		},
 	}
 }
 
@@ -150,12 +156,18 @@ func Unit(card *data.Unit) *discordgo.MessageEmbed {
 		fields = append(fields, field("Surge", surgeStr))
 	}
 
+	imageURL := "http://legion-hq.com/units/" + url.PathEscape(card.Name) + ".png"
+	if card.LDF == "tx225gavwoccupiercombatassaulttank" {
+		imageURL = "http://legion-hq.com/units/Assault%20Tank.png"
+	}
+
 	return &discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{Name: "Unit"},
 		Title:       name,
 		Description: card.Subtitle,
 		Color:       colorUnit,
 		Fields:      fields,
+		Image:       &discordgo.MessageEmbedImage{URL: imageURL},
 	}
 }
 
