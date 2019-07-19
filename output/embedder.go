@@ -87,6 +87,10 @@ func Upgrade(card *data.Upgrade) *discordgo.MessageEmbed {
 
 	imageURL := "http://legion-hq.com/upgrades/" + url.PathEscape(card.Name) + ".png"
 
+	if card.LDF == "e11dfocusedfireconfig" {
+		imageURL = "http://legion-hq.com/upgrades/E-11D%20Grenade%20Launcher%20Config.png"
+	}
+
 	return &discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{Name: "Upgrade"},
 		Title:       card.Name,
