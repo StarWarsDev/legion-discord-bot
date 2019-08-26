@@ -8,23 +8,23 @@ import (
 
 // LegionData is a container for all Legion data
 type LegionData struct {
-	Units        *Units
-	Upgrades     *Upgrades
-	CommandCards []*CommandCard
+	Units        Units
+	Upgrades     Upgrades
+	CommandCards []CommandCard
 }
 
 // Units is a container of all the different unit types
 type Units struct {
-	Commander     []*Unit
-	Operative     []*Unit
-	Corps         []*Unit
-	SpecialForces []*Unit `json:"Special Forces"`
-	Support       []*Unit
-	Heavy         []*Unit
+	Commander     []Unit
+	Operative     []Unit
+	Corps         []Unit
+	SpecialForces []Unit `json:"Special Forces"`
+	Support       []Unit
+	Heavy         []Unit
 }
 
 // Flattened returns a flat slice of units regardless of type
-func (u *Units) Flattened() (units []*Unit) {
+func (u *Units) Flattened() (units []Unit) {
 	units = append(units, u.Commander...)
 	units = append(units, u.Operative...)
 	units = append(units, u.Corps...)
@@ -48,11 +48,11 @@ type Unit struct {
 	Courage      int
 	Resilience   int
 	Defense      string
-	Surge        *Surge
+	Surge        Surge
 	Speed        int
 	Slots        []string
-	Keywords     []*Keyword
-	Weapons      []*Weapon
+	Keywords     []Keyword
+	Weapons      []Weapon
 	CommandCards []string
 	Unique       bool
 }
@@ -65,22 +65,22 @@ type Surge struct {
 
 // Upgrades is a container of all the different upgrade types
 type Upgrades struct {
-	Armament    []*Upgrade
-	Command     []*Upgrade
-	Comms       []*Upgrade
-	Elite       []*Upgrade
-	Force       []*Upgrade
-	Gear        []*Upgrade
-	Generator   []*Upgrade
-	Grenades    []*Upgrade
-	Hardpoint   []*Upgrade
-	HeavyWeapon []*Upgrade `json:"Heavy Weapon"`
-	Personnel   []*Upgrade
-	Pilot       []*Upgrade
+	Armament    []Upgrade
+	Command     []Upgrade
+	Comms       []Upgrade
+	Elite       []Upgrade
+	Force       []Upgrade
+	Gear        []Upgrade
+	Generator   []Upgrade
+	Grenades    []Upgrade
+	Hardpoint   []Upgrade
+	HeavyWeapon []Upgrade `json:"Heavy Weapon"`
+	Personnel   []Upgrade
+	Pilot       []Upgrade
 }
 
 // Flattened returns a flat slice of all upgrades regardless of type
-func (u *Upgrades) Flattened() (upgrades []*Upgrade) {
+func (u *Upgrades) Flattened() (upgrades []Upgrade) {
 	upgrades = append(upgrades, u.Armament...)
 	upgrades = append(upgrades, u.Command...)
 	upgrades = append(upgrades, u.Comms...)
@@ -106,7 +106,7 @@ type Upgrade struct {
 	Restrictions UpgradeRestrictions
 	Slot         string
 	Weapon       UpgradeWeapon
-	Keywords     []*Keyword
+	Keywords     []Keyword
 	Exhaust      bool
 }
 
@@ -119,7 +119,7 @@ type UpgradeRestrictions struct {
 // UpgradeWeapon is a special kind of Weapon
 type UpgradeWeapon struct {
 	Weapon
-	Keywords []*Keyword
+	Keywords []Keyword
 }
 
 // Keyword is a wrapper for the keyword object
@@ -159,7 +159,7 @@ type AttackDice struct {
 	Red   int
 }
 
-func LoadLegionData() *LegionData {
+func LoadLegionData() (legionData LegionData) {
 	// read the legion-data.json file
 	jsonFile, err := os.Open("./legion-data.json")
 
@@ -170,10 +170,8 @@ func LoadLegionData() *LegionData {
 	defer jsonFile.Close()
 
 	// unmarshal the json into LegionData
-	var legionData LegionData
 	bytes, _ := ioutil.ReadAll(jsonFile)
 	json.Unmarshal(bytes, &legionData)
 
-	// return a pointer to the data
-	return &legionData
+	return
 }

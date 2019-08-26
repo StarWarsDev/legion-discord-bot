@@ -6,28 +6,32 @@ import (
 )
 
 // LookupUpgrade finds an upgrade based on its name
-func (util *Util) LookupUpgrade(upgradeName string) *data.Upgrade {
+func (util *Util) LookupUpgrade(upgradeName string) data.Upgrade {
+	var upgrade data.Upgrade
 	upgrName := utils.CleanName(upgradeName)
 
 	upgrades := util.legionData.Upgrades.Flattened()
-	for _, upgrade := range upgrades {
-		uName := utils.CleanName(upgrade.Name)
+	for _, card := range upgrades {
+		uName := utils.CleanName(card.Name)
 
 		if upgrName == uName {
-			return upgrade
+			upgrade = card
+			break
 		}
 	}
 
-	return nil
+	return upgrade
 }
 
 // LookupUpgradeByLdf finds a upgrade card by its LDF value
-func (util *Util) LookupUpgradeByLdf(ldf string) *data.Upgrade {
+func (util *Util) LookupUpgradeByLdf(ldf string) data.Upgrade {
+	var upgrade data.Upgrade
 	for _, card := range util.legionData.Upgrades.Flattened() {
 		if ldf == card.LDF {
-			return card
+			upgrade = card
+			break
 		}
 	}
 
-	return nil
+	return upgrade
 }

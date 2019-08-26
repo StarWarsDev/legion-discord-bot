@@ -25,7 +25,7 @@ type Util struct {
 }
 
 // NewUtil creates a new Util pointer
-func NewUtil(legionData *data.LegionData, lookupUtil *lookup.Util) *Util {
+func NewUtil(legionData *data.LegionData, lookupUtil *lookup.Util) Util {
 	// index the data for searching
 	mapping := bleve.NewIndexMapping()
 	index, err := bleve.New(IndexKey, mapping)
@@ -42,7 +42,7 @@ func NewUtil(legionData *data.LegionData, lookupUtil *lookup.Util) *Util {
 		}
 	}
 
-	util := &Util{
+	util := Util{
 		legionData: legionData,
 		lookupUtil: lookupUtil,
 		index:      index,
@@ -73,8 +73,8 @@ func (util *Util) indexUnits() {
 }
 
 // FullSearch performs a full text search against all legion data
-func (util *Util) FullSearch(text string) []*discordgo.MessageEmbed {
-	results := []*discordgo.MessageEmbed{}
+func (util *Util) FullSearch(text string) []discordgo.MessageEmbed {
+	results := []discordgo.MessageEmbed{}
 	query := bleve.NewQueryStringQuery(text)
 	search := bleve.NewSearchRequest(query)
 	searchResults, err := util.index.Search(search)
@@ -94,23 +94,23 @@ func (util *Util) FullSearch(text string) []*discordgo.MessageEmbed {
 		switch hitType {
 		case "commandcard":
 			card := util.lookupUtil.LookupCommandCardByLdf(ldf)
-			results = append(results, output.CommandCard(card))
+			results = append(results, output.CommandCard(&card))
 		case "unit":
 			card := util.lookupUtil.LookupUnitByLdf(ldf)
 			if len(card.CommandCards) > 0 {
 				var commandCards []string
 				for _, ldf := range card.CommandCards {
 					card := util.lookupUtil.LookupCommandCardByLdf(ldf)
-					if card != nil {
+					if card.LDF != "" {
 						commandCards = append(commandCards, card.Name)
 					}
 				}
 				card.CommandCards = commandCards
 			}
-			results = append(results, output.Unit(card))
+			results = append(results, output.Unit(&card))
 		case "upgrade":
 			card := util.lookupUtil.LookupUpgradeByLdf(ldf)
-			results = append(results, output.Upgrade(card))
+			results = append(results, output.Upgrade(&card))
 		}
 	}
 

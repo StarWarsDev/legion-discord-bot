@@ -10,8 +10,8 @@ type Util struct {
 }
 
 // NewUtil creates a new Util pointer
-func NewUtil(legionData *data.LegionData) *Util {
-	return &Util{
+func NewUtil(legionData *data.LegionData) Util {
+	return Util{
 		legionData: legionData,
 	}
 }

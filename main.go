@@ -21,9 +21,9 @@ import (
 
 var (
 	token      string
-	legionData *data.LegionData
-	lookupUtil *lookup.Util
-	searchUtil *search.Util
+	legionData data.LegionData
+	lookupUtil lookup.Util
+	searchUtil search.Util
 )
 
 func init() {
@@ -45,8 +45,8 @@ func main() {
 	fmt.Println("Hello, World! I am the Discord Legion bot!")
 
 	legionData = data.LoadLegionData()
-	lookupUtil = lookup.NewUtil(legionData)
-	searchUtil = search.NewUtil(legionData, lookupUtil)
+	lookupUtil = lookup.NewUtil(&legionData)
+	searchUtil = search.NewUtil(&legionData, &lookupUtil)
 
 	discord, err := discordgo.New("Bot " + token)
 
@@ -115,7 +115,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		info := output.Info("", "")
 
 		info.Fields = fields
-		channelMessageSendEmbed(s, m, info)
+		channelMessageSendEmbed(s, m, &info)
 	}
 
 	if m.Content == "!gonk" {
@@ -124,7 +124,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		e.Image = &discordgo.MessageEmbedImage{
 			URL: "https://lumiere-a.akamaihd.net/v1/images/gnk-droid-main-image_f0d89099.jpeg?region=0%2C80%2C1280%2C720",
 		}
-		channelMessageSendEmbed(s, m, e)
+		channelMessageSendEmbed(s, m, &e)
 	}
 
 	if m.Content == "!lumpy" {
@@ -149,7 +149,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		unitName := strings.Replace(m.Content, "!unit", "", 1)
 		unitName = strings.TrimSpace(unitName)
 
-		var response *discordgo.MessageEmbed
+		var response discordgo.MessageEmbed
 		if len(unitName) == 0 {
 			response = output.Error(
 				"Bad input",
@@ -157,32 +157,32 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			)
 		} else {
 			unit := lookupUtil.LookupUnit(unitName)
-			if unit != nil {
+			if unit.LDF != "" {
 				// replace command card ldf values with names
 				if len(unit.CommandCards) > 0 {
 					var commandCards []string
 					for _, ldf := range unit.CommandCards {
 						card := lookupUtil.LookupCommandCardByLdf(ldf)
-						if card != nil {
+						if card.LDF != "" {
 							commandCards = append(commandCards, card.Name)
 						}
 					}
 					unit.CommandCards = commandCards
 				}
-				response = output.Unit(unit)
+				response = output.Unit(&unit)
 			} else {
 				response = output.Error("No results found", "Nothing found for \""+unitName+"\"")
 			}
 		}
 
-		channelMessageSendEmbed(s, m, response)
+		channelMessageSendEmbed(s, m, &response)
 	}
 
 	if strings.HasPrefix(m.Content, "!upgrade") {
 		upgradeName := strings.Replace(m.Content, "!upgrade", "", 1)
 		upgradeName = strings.TrimSpace(upgradeName)
 
-		var response *discordgo.MessageEmbed
+		var response discordgo.MessageEmbed
 		if len(upgradeName) == 0 {
 			response = output.Error(
 				"Bad input",
@@ -190,21 +190,21 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			)
 		} else {
 			upgrade := lookupUtil.LookupUpgrade(upgradeName)
-			if upgrade != nil {
-				response = output.Upgrade(upgrade)
+			if upgrade.LDF != "" {
+				response = output.Upgrade(&upgrade)
 			} else {
 				response = output.Error("No results found", "Nothing found for \""+upgradeName+"\"")
 			}
 		}
 
-		channelMessageSendEmbed(s, m, response)
+		channelMessageSendEmbed(s, m, &response)
 	}
 
 	if strings.HasPrefix(m.Content, "!command") {
 		commandName := strings.Replace(m.Content, "!command", "", 1)
 		commandName = strings.TrimSpace(commandName)
 
-		var response *discordgo.MessageEmbed
+		var response discordgo.MessageEmbed
 		if len(commandName) == 0 {
 			response = output.Error(
 				"Bad input",
@@ -212,14 +212,14 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			)
 		} else {
 			command := lookupUtil.LookupCommand(commandName)
-			if command != nil {
-				response = output.CommandCard(command)
+			if command.LDF != "" {
+				response = output.CommandCard(&command)
 			} else {
 				response = output.Error("No results found", "Nothing found for \""+commandName+"\"")
 			}
 		}
 
-		channelMessageSendEmbed(s, m, response)
+		channelMessageSendEmbed(s, m, &response)
 	}
 
 	if strings.HasPrefix(m.Content, "!search") {
@@ -227,16 +227,18 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		searchText = strings.TrimSpace(searchText)
 
 		if strings.ToLower(searchText) == "help" {
-			channelMessageSendEmbed(s, m, output.Info("Search Help", "Find more info on how to structure your search here: http://blevesearch.com/docs/Query-String-Query/"))
+			outputInfo := output.Info("Search Help", "Find more info on how to structure your search here: http://blevesearch.com/docs/Query-String-Query/")
+			channelMessageSendEmbed(s, m, &outputInfo)
 		} else {
 
 			if searchText == "" {
 				response := m.Author.Mention() + ", the `!search` command requires a search term. Please try again using this format `!search <search term>`"
-				channelMessageSendEmbed(s, m, output.Error("Bad input", response))
+				outputError := output.Error("Bad input", response)
+				channelMessageSendEmbed(s, m, &outputError)
 			} else {
 				embeddedResults := searchUtil.FullSearch(searchText)
 				for _, embed := range embeddedResults {
-					channelMessageSendEmbed(s, m, embed)
+					channelMessageSendEmbed(s, m, &embed)
 				}
 			}
 		}
@@ -259,6 +261,7 @@ func channelMessageSendEmbed(s *discordgo.Session, m *discordgo.MessageCreate, e
 
 		fmt.Println(string(b))
 
-		s.ChannelMessageSendEmbed(m.ChannelID, output.Error("Failed to render", utils.WithTemplate("There was a problem rendering the %s \"%s\"", embed.Author.Name, embed.Title)))
+		outputError := output.Error("Failed to render", utils.WithTemplate("There was a problem rendering the %s \"%s\"", embed.Author.Name, embed.Title))
+		s.ChannelMessageSendEmbed(m.ChannelID, &outputError)
 	}
 }

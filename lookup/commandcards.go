@@ -6,26 +6,31 @@ import (
 )
 
 // LookupCommand finds a command card by its name
-func (util *Util) LookupCommand(commandName string) *data.CommandCard {
+func (util *Util) LookupCommand(commandName string) data.CommandCard {
+	var commandCard data.CommandCard
 	cName := utils.CleanName(commandName)
 
 	for _, card := range util.legionData.CommandCards {
 		cardName := utils.CleanName(card.Name)
 		if cardName == cName {
-			return card
+			commandCard = card
+			break
 		}
 	}
 
-	return nil
+	return commandCard
 }
 
 // LookupCommandCardByLdf finds a command card by its LDF value
-func (util *Util) LookupCommandCardByLdf(ldf string) *data.CommandCard {
+func (util *Util) LookupCommandCardByLdf(ldf string) data.CommandCard {
+	var commandCard data.CommandCard
+
 	for _, card := range util.legionData.CommandCards {
 		if ldf == card.LDF {
-			return card
+			commandCard = card
+			break
 		}
 	}
 
-	return nil
+	return commandCard
 }

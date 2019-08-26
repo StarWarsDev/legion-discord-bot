@@ -31,28 +31,6 @@ func JustAlphanumeric(in string) (out string) {
 	return
 }
 
-func Courage(val int) interface{} {
-	if val < 1 {
-		return "-"
-	}
-
-	return val
-}
-
-func SurgeString(surge *data.Surge) string {
-	var str []string
-
-	if surge.Attack != "" {
-		str = append(str, WithTemplate("attack: %s", surge.Attack))
-	}
-
-	if surge.Defense != "" {
-		str = append(str, WithTemplate("defense: %s", surge.Defense))
-	}
-
-	return strings.Join(str, ", ")
-}
-
 func DiceString(dice *data.AttackDice) string {
 	str := []string{}
 
