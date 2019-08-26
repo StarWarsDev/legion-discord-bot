@@ -8,7 +8,9 @@ RUN make build
 
 FROM alpine
 
-ENV TOKEN USE_THE_REAL_TOKEN
+LABEL maintainer="Steve Good (thestarwarsdev@gmail.com)"
+
+ENV DISCORD_TOKEN USE_THE_REAL_TOKEN
 
 RUN mkdir -p /app
 WORKDIR /app
@@ -22,4 +24,7 @@ RUN apk update \
         ca-certificates \
         && update-ca-certificates 2>/dev/null || true
 
-CMD ["/bin/sh", "-c", "./legion-discord-bot -t ${TOKEN}"]
+RUN useradd ldb
+USER ldb
+
+CMD ["/bin/sh", "-c", "./legion-discord-bot"]
