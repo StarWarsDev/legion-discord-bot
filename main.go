@@ -1,32 +1,23 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
-	"math/rand"
-	"os"
-	"os/signal"
-	"strings"
-	"syscall"
-	"time"
-
+	"github.com/StarWarsDev/legion-discord-bot/channel"
 	"github.com/StarWarsDev/legion-discord-bot/data"
 	"github.com/StarWarsDev/legion-discord-bot/lookup"
-	"github.com/StarWarsDev/legion-discord-bot/output"
 	"github.com/StarWarsDev/legion-discord-bot/search"
-	"github.com/StarWarsDev/legion-discord-bot/utils"
 	"github.com/bwmarrin/discordgo"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
-var (
-	token      string
-	legionData data.LegionData
-	lookupUtil lookup.Util
-	searchUtil search.Util
-)
+func main() {
+	fmt.Println("Hello, World! I am the Discord Legion bot!")
 
-func init() {
+	// init all the data
+	var token string
 	flag.StringVar(&token, "t", "", "Bot Token")
 	flag.Parse()
 
@@ -40,22 +31,21 @@ func init() {
 		panic("No discord token provided! Try passing it with the '-t' flag or setting 'DISCORD_TOKEN' in the environment.")
 	}
 
-	legionData = data.LoadLegionData()
-	lookupUtil = lookup.NewUtil(&legionData)
-	searchUtil = search.NewUtil(&legionData, &lookupUtil)
-}
+	legionData := data.LoadLegionData()
+	lookupUtil := lookup.NewUtil(&legionData)
+	searchUtil := search.NewUtil(&legionData, &lookupUtil)
 
-func main() {
-	fmt.Println("Hello, World! I am the Discord Legion bot!")
-
+	// create a new connection to Discord
 	discord, err := discordgo.New("Bot " + token)
 
 	if err != nil {
 		panic(err)
 	}
 
-	discord.AddHandler(messageCreate)
+	// create and add the message handler
+	discord.AddHandler(channel.NewMessageHandler(&lookupUtil, &searchUtil))
 
+	// open the connection to Discord
 	err = discord.Open()
 
 	if err != nil {
@@ -71,197 +61,4 @@ func main() {
 	// Cleanly close down the Discord session.
 	discord.Close()
 	os.RemoveAll(search.IndexKey)
-}
-
-func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	// Ignore all messages created by the bot itself
-	// This isn't required in this specific example but it's a good practice.
-	if m.Author.ID == s.State.User.ID {
-		return
-	}
-
-	if m.Content == "!help" {
-		fields := []*discordgo.MessageEmbedField{
-			{
-				Name:  "!unit <unit card name>",
-				Value: "Displays information about the specified unit",
-			},
-			{
-				Name:  "!upgrade <upgrade card name>",
-				Value: "Displays information about the specified upgrade",
-			},
-			{
-				Name:  "!command <command card name>",
-				Value: "Displays information about the specified command card",
-			},
-			{
-				Name:  "!search <search term>",
-				Value: "Displays search results across all data",
-			},
-			{
-				Name:  "!gonk",
-				Value: ":robot:",
-			},
-			{
-				Name:  "!lumpy",
-				Value: ":heart:",
-			},
-			{
-				Name:  "!help",
-				Value: "This help message",
-			},
-		}
-
-		info := output.Info("", "")
-
-		info.Fields = fields
-		channelMessageSendEmbed(s, m, &info)
-	}
-
-	if m.Content == "!gonk" {
-		e := output.Error("GONK!", "")
-		e.URL = "https://www.starwars.com/databank/gnk-droid"
-		e.Image = &discordgo.MessageEmbedImage{
-			URL: "https://lumiere-a.akamaihd.net/v1/images/gnk-droid-main-image_f0d89099.jpeg?region=0%2C80%2C1280%2C720",
-		}
-		channelMessageSendEmbed(s, m, &e)
-	}
-
-	if m.Content == "!lumpy" {
-		urls := []string{
-			"https://media.giphy.com/media/PSnTTyw6BdjHy/giphy.gif",
-			"https://media.giphy.com/media/10QqGj0eqGOWIw/giphy.gif",
-			"https://media.giphy.com/media/FY5dT7KDV2i0o/giphy.gif",
-			"https://media.giphy.com/media/hffHBmxUSfHlm/giphy.gif",
-		}
-
-		rand.Seed(time.Now().Unix()) // initialize global pseudo random generator
-		randomLumpyURL := urls[rand.Intn(len(urls))]
-
-		channelMessageSendEmbed(s, m, &discordgo.MessageEmbed{
-			Image: &discordgo.MessageEmbedImage{
-				URL: randomLumpyURL,
-			},
-		})
-	}
-
-	if strings.HasPrefix(m.Content, "!unit") {
-		unitName := strings.Replace(m.Content, "!unit", "", 1)
-		unitName = strings.TrimSpace(unitName)
-
-		var response discordgo.MessageEmbed
-		if len(unitName) == 0 {
-			response = output.Error(
-				"Bad input",
-				m.Author.Mention()+", the `!unit` command requires a unit card name. Please try again using this format `!unit <unit card name>`",
-			)
-		} else {
-			unit := lookupUtil.LookupUnit(unitName)
-			if unit.LDF != "" {
-				// replace command card ldf values with names
-				if len(unit.CommandCards) > 0 {
-					var commandCards []string
-					for _, ldf := range unit.CommandCards {
-						card := lookupUtil.LookupCommandCardByLdf(ldf)
-						if card.LDF != "" {
-							commandCards = append(commandCards, card.Name)
-						}
-					}
-					unit.CommandCards = commandCards
-				}
-				response = output.Unit(&unit)
-			} else {
-				response = output.Error("No results found", "Nothing found for \""+unitName+"\"")
-			}
-		}
-
-		channelMessageSendEmbed(s, m, &response)
-	}
-
-	if strings.HasPrefix(m.Content, "!upgrade") {
-		upgradeName := strings.Replace(m.Content, "!upgrade", "", 1)
-		upgradeName = strings.TrimSpace(upgradeName)
-
-		var response discordgo.MessageEmbed
-		if len(upgradeName) == 0 {
-			response = output.Error(
-				"Bad input",
-				m.Author.Mention()+", the `!upgrade` command requires an upgrade card name. Please try again using this format `!upgrade <upgrade card name>`",
-			)
-		} else {
-			upgrade := lookupUtil.LookupUpgrade(upgradeName)
-			if upgrade.LDF != "" {
-				response = output.Upgrade(&upgrade)
-			} else {
-				response = output.Error("No results found", "Nothing found for \""+upgradeName+"\"")
-			}
-		}
-
-		channelMessageSendEmbed(s, m, &response)
-	}
-
-	if strings.HasPrefix(m.Content, "!command") {
-		commandName := strings.Replace(m.Content, "!command", "", 1)
-		commandName = strings.TrimSpace(commandName)
-
-		var response discordgo.MessageEmbed
-		if len(commandName) == 0 {
-			response = output.Error(
-				"Bad input",
-				m.Author.Mention()+", the `!command` command requires a command card name. Please try again using this format `!command <command card name>`",
-			)
-		} else {
-			command := lookupUtil.LookupCommand(commandName)
-			if command.LDF != "" {
-				response = output.CommandCard(&command)
-			} else {
-				response = output.Error("No results found", "Nothing found for \""+commandName+"\"")
-			}
-		}
-
-		channelMessageSendEmbed(s, m, &response)
-	}
-
-	if strings.HasPrefix(m.Content, "!search") {
-		searchText := strings.Replace(m.Content, "!search", "", 1)
-		searchText = strings.TrimSpace(searchText)
-
-		if strings.ToLower(searchText) == "help" {
-			outputInfo := output.Info("Search Help", "Find more info on how to structure your search here: http://blevesearch.com/docs/Query-String-Query/")
-			channelMessageSendEmbed(s, m, &outputInfo)
-		} else {
-
-			if searchText == "" {
-				response := m.Author.Mention() + ", the `!search` command requires a search term. Please try again using this format `!search <search term>`"
-				outputError := output.Error("Bad input", response)
-				channelMessageSendEmbed(s, m, &outputError)
-			} else {
-				embeddedResults := searchUtil.FullSearch(searchText)
-				for _, embed := range embeddedResults {
-					channelMessageSendEmbed(s, m, &embed)
-				}
-			}
-		}
-	}
-
-}
-
-func channelMessageSendEmbed(s *discordgo.Session, m *discordgo.MessageCreate, embed *discordgo.MessageEmbed) {
-	_, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
-	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Embedded item as follows")
-		fmt.Printf("%d Fields\n", len(embed.Fields))
-
-		b, err := json.Marshal(embed)
-		if err != nil {
-			fmt.Println("Could not unmarshal data")
-			fmt.Println(err)
-		}
-
-		fmt.Println(string(b))
-
-		outputError := output.Error("Failed to render", utils.WithTemplate("There was a problem rendering the %s \"%s\"", embed.Author.Name, embed.Title))
-		s.ChannelMessageSendEmbed(m.ChannelID, &outputError)
-	}
 }

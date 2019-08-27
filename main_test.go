@@ -2,15 +2,25 @@ package main
 
 import (
 	"github.com/StarWarsDev/legion-discord-bot/data"
+	"github.com/StarWarsDev/legion-discord-bot/lookup"
 	"testing"
 )
+
+var (
+	lookupUtil lookup.Util
+)
+
+func init() {
+	legionData := data.LoadLegionData()
+	lookupUtil = lookup.NewUtil(&legionData)
+}
 
 func TestLookupUnit(t *testing.T) {
 	name := "Darth Vader"
 	ldf := "darthvader"
 
 	assert := func(unit *data.Unit) {
-		t.Logf("Unit name should be %s and ldf should be %s", name, ldf)
+		t.Logf("Unit name should be %s and ldf should be %s, got %s - %s", name, ldf, unit.Name, unit.LDF)
 		{
 			if unit.LDF != ldf || unit.Name != name {
 				t.Errorf("Expected unit %s (%s) but got %s (%s)", name, ldf, unit.Name, unit.LDF)
@@ -37,7 +47,7 @@ func TestLookupUpgrade(t *testing.T) {
 	ldf := "anger"
 
 	assert := func(upgrade *data.Upgrade) {
-		t.Logf("Upgrade name should be %s and ldf should be %s", name, ldf)
+		t.Logf("Upgrade name should be %s and ldf should be %s, got %s - %s", name, ldf, upgrade.Name, upgrade.LDF)
 		{
 			if upgrade.Name != name || upgrade.LDF != ldf {
 				t.Errorf("Expected upgrade %s (%s) but got %s (%s)", name, ldf, upgrade.Name, upgrade.LDF)
@@ -64,7 +74,7 @@ func TestLookupCommand(t *testing.T) {
 	ldf := "masterofevil"
 
 	assert := func(command *data.CommandCard) {
-		t.Logf("Command card name should be %s and ldf should be %s", name, ldf)
+		t.Logf("Command card name should be %s and ldf should be %s, got %s - %s", name, ldf, command.Name, command.LDF)
 		{
 			if command.Name != name || command.LDF != ldf {
 				t.Errorf("Expected command card %s (%s) but got %s (%s)", name, ldf, command.Name, command.LDF)
