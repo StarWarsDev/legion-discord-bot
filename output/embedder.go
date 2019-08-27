@@ -20,11 +20,6 @@ const (
 	checkMark        = "✓"
 )
 
-// Success returns an Embedder with a level of Success
-func Success(title, description string) discordgo.MessageEmbed {
-	return newEmbedder(colorSuccess, title, description)
-}
-
 // Error returns an Embedder with a level of Success
 func Error(title, description string) discordgo.MessageEmbed {
 	return newEmbedder(colorError, title, description)
@@ -223,11 +218,11 @@ func diceCount(dice *data.AttackDice) int {
 	black := dice.Black
 	red := dice.Red
 
-	return (white + black + red)
+	return white + black + red
 }
 
 func weaponString(weapon *data.Weapon) string {
-	weaponInfo := []string{}
+	var weaponInfo []string
 	if len(weapon.Name) > 0 {
 		weaponInfo = append(weaponInfo, "  "+weapon.Name)
 	}
@@ -244,7 +239,7 @@ func weaponString(weapon *data.Weapon) string {
 }
 
 func upgradeWeaponString(weapon *data.UpgradeWeapon) string {
-	weaponInfo := []string{}
+	var weaponInfo []string
 	if len(weapon.Name) > 0 {
 		weaponInfo = append(weaponInfo, "  "+weapon.Name)
 	}
@@ -261,7 +256,7 @@ func upgradeWeaponString(weapon *data.UpgradeWeapon) string {
 }
 
 func joinKeywords(keywords []data.Keyword) string {
-	ks := []string{}
+	var ks []string
 	for _, keyword := range keywords {
 		ks = append(ks, keyword.Name)
 	}

@@ -167,11 +167,13 @@ func LoadLegionData() (legionData LegionData) {
 		panic(err)
 	}
 
-	defer jsonFile.Close()
+	defer func() {
+		_ = jsonFile.Close()
+	}()
 
 	// unmarshal the json into LegionData
 	bytes, _ := ioutil.ReadAll(jsonFile)
-	json.Unmarshal(bytes, &legionData)
+	_ = json.Unmarshal(bytes, &legionData)
 
 	return
 }

@@ -56,25 +56,25 @@ func NewUtil(legionData *data.LegionData, lookupUtil *lookup.Util) Util {
 
 func (util *Util) indexCommandCards() {
 	for _, card := range util.legionData.CommandCards {
-		util.index.Index("commandcard."+card.LDF, card)
+		_ = util.index.Index("commandcard."+card.LDF, card)
 	}
 }
 
 func (util *Util) indexUpgrades() {
 	for _, card := range util.legionData.Upgrades.Flattened() {
-		util.index.Index("upgrade."+card.LDF, card)
+		_ = util.index.Index("upgrade."+card.LDF, card)
 	}
 }
 
 func (util *Util) indexUnits() {
 	for _, card := range util.legionData.Units.Flattened() {
-		util.index.Index("unit."+card.LDF, card)
+		_ = util.index.Index("unit."+card.LDF, card)
 	}
 }
 
 // FullSearch performs a full text search against all legion data
 func (util *Util) FullSearch(text string) []discordgo.MessageEmbed {
-	results := []discordgo.MessageEmbed{}
+	var results []discordgo.MessageEmbed
 	query := bleve.NewQueryStringQuery(text)
 	search := bleve.NewSearchRequest(query)
 	searchResults, err := util.index.Search(search)

@@ -28,7 +28,7 @@ func messageSendEmbed(s *discordgo.Session, m *discordgo.MessageCreate, embed *d
 		fmt.Println(string(b))
 
 		outputError := output.Error("Failed to render", utils.WithTemplate("There was a problem rendering the %s \"%s\"", embed.Author.Name, embed.Title))
-		s.ChannelMessageSendEmbed(m.ChannelID, &outputError)
+		_, _ = s.ChannelMessageSendEmbed(m.ChannelID, &outputError)
 	}
 }
 

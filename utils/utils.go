@@ -32,19 +32,19 @@ func JustAlphanumeric(in string) (out string) {
 }
 
 func DiceString(dice *data.AttackDice) string {
-	str := []string{}
+	var strs []string
 
 	if dice.White > 0 {
-		str = append(str, WithTemplate("white: %d", dice.White))
+		strs = append(strs, WithTemplate("white: %d", dice.White))
 	}
 
 	if dice.Black > 0 {
-		str = append(str, WithTemplate("black: %d", dice.Black))
+		strs = append(strs, WithTemplate("black: %d", dice.Black))
 	}
 
 	if dice.Red > 0 {
-		str = append(str, WithTemplate("red: %d", dice.Red))
+		strs = append(strs, WithTemplate("red: %d", dice.Red))
 	}
 
-	return strings.Join(str, ", ")
+	return strings.Join(strs, ", ")
 }
