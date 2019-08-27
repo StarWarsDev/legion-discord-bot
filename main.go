@@ -39,14 +39,14 @@ func init() {
 		// still no token, panic!
 		panic("No discord token provided! Try passing it with the '-t' flag or setting 'DISCORD_TOKEN' in the environment.")
 	}
-}
-
-func main() {
-	fmt.Println("Hello, World! I am the Discord Legion bot!")
 
 	legionData = data.LoadLegionData()
 	lookupUtil = lookup.NewUtil(&legionData)
 	searchUtil = search.NewUtil(&legionData, &lookupUtil)
+}
+
+func main() {
+	fmt.Println("Hello, World! I am the Discord Legion bot!")
 
 	discord, err := discordgo.New("Bot " + token)
 
