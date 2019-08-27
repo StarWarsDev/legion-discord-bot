@@ -11,7 +11,6 @@ import (
 )
 
 const (
-	colorSuccess     = 0x00AE86
 	colorError       = 0xE84A4A
 	colorInfo        = 0xF2E82B
 	colorCommandCard = 0x4287f5
@@ -20,36 +19,34 @@ const (
 	checkMark        = "✓"
 )
 
-// Success returns an Embedder with a level of Success
-func Success(title, description string) *discordgo.MessageEmbed {
-	return newEmbedder(colorSuccess, title, description)
-}
-
 // Error returns an Embedder with a level of Success
-func Error(title, description string) *discordgo.MessageEmbed {
+func Error(title, description string) discordgo.MessageEmbed {
 	return newEmbedder(colorError, title, description)
 }
 
 // Info returns an Embedder with a level of Success
-func Info(title, description string) *discordgo.MessageEmbed {
+func Info(title, description string) discordgo.MessageEmbed {
 	return newEmbedder(colorInfo, title, description)
 }
 
 // CommandCard builds an Embedder for a command card
-func CommandCard(card *data.CommandCard) *discordgo.MessageEmbed {
-	fields := []*discordgo.MessageEmbedField{
-		field("Pips", int2Str(card.Pips)),
-		field("Orders", card.Orders),
-	}
+func CommandCard(card *data.CommandCard) discordgo.MessageEmbed {
+	var fields []*discordgo.MessageEmbedField
+
+	pipsField := field("Pips", int2Str(card.Pips))
+	ordersField := field("Orders", card.Orders)
+
+	fields = append(fields, &pipsField, &ordersField)
 
 	if diceCount(&card.Weapon.Dice) > 0 {
 		weapon := weaponString(&card.Weapon)
-		fields = append(fields, field("Weapon", weapon))
+		weaponField := field("Weapon", weapon)
+		fields = append(fields, &weaponField)
 	}
 
 	imageURL := "http://legion-hq.com/commands/" + url.PathEscape(card.Name) + ".png"
 
-	return &discordgo.MessageEmbed{
+	return discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{Name: "Command"},
 		Title:       card.Name,
 		Description: card.Description,
@@ -62,27 +59,33 @@ func CommandCard(card *data.CommandCard) *discordgo.MessageEmbed {
 }
 
 // Upgrade builds an embedder for an upgrade card
-func Upgrade(card *data.Upgrade) *discordgo.MessageEmbed {
-	fields := []*discordgo.MessageEmbedField{
-		field("Points", int2Str(card.Points)),
-		field("Slot", card.Slot),
-	}
+func Upgrade(card *data.Upgrade) discordgo.MessageEmbed {
+	var fields []*discordgo.MessageEmbedField
+
+	pointsField := field("Points", int2Str(card.Points))
+	slotField := field("Slot", card.Slot)
+
+	fields = append(fields, &pointsField, &slotField)
 
 	if card.Exhaust {
-		fields = append(fields, field("Exhaustable", checkMark))
+		exhaustibleField := field("Exhaustible", checkMark)
+		fields = append(fields, &exhaustibleField)
 	}
 
 	if card.Restrictions.Name != "" {
-		fields = append(fields, field("Restrictions", card.Restrictions.Name))
+		restrictionsField := field("Restrictions", card.Restrictions.Name)
+		fields = append(fields, &restrictionsField)
 	}
 
 	if len(card.Keywords) > 0 {
-		fields = append(fields, field("Keywords", joinKeywords(card.Keywords)))
+		keywordsField := field("Keywords", joinKeywords(card.Keywords))
+		fields = append(fields, &keywordsField)
 	}
 
 	if diceCount(&card.Weapon.Dice) > 0 {
 		weapon := upgradeWeaponString(&card.Weapon)
-		fields = append(fields, field("Weapon", weapon))
+		weaponField := field("Weapon", weapon)
+		fields = append(fields, &weaponField)
 	}
 
 	imageURL := "http://legion-hq.com/upgrades/" + url.PathEscape(card.Name) + ".png"
@@ -91,7 +94,7 @@ func Upgrade(card *data.Upgrade) *discordgo.MessageEmbed {
 		imageURL = "http://legion-hq.com/upgrades/E-11D%20Grenade%20Launcher%20Config.png"
 	}
 
-	return &discordgo.MessageEmbed{
+	return discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{Name: "Upgrade"},
 		Title:       card.Name,
 		Description: card.Description,
@@ -104,44 +107,61 @@ func Upgrade(card *data.Upgrade) *discordgo.MessageEmbed {
 }
 
 // Unit builds an embedder for a unit card
-func Unit(card *data.Unit) *discordgo.MessageEmbed {
-	fields := []*discordgo.MessageEmbedField{
-		field("Points", int2Str(card.Points)),
-		field("Type", card.Type),
-		field("Rank", card.Rank),
-		field("Minis", int2Str(card.Minis)),
-		field("Wounds", int2Str(card.Wounds)),
-	}
+func Unit(card *data.Unit) discordgo.MessageEmbed {
+	var fields []*discordgo.MessageEmbedField
 
-	if card.Resilience > 0 {
-		fields = append(fields, field("Resilience", int2Str(card.Resilience)))
-	} else {
-		fields = append(fields, field("Courage", int2Str(card.Courage)))
-	}
+	pointsField := field("Points", int2Str(card.Points))
+	typeField := field("Type", card.Type)
+	rankField := field("Rank", card.Rank)
+	minisField := field("Minis", int2Str(card.Minis))
+	woundsField := field("Wounds", int2Str(card.Wounds))
 
 	fields = append(fields,
-		field("Defense", card.Defense),
-		field("Speed", int2Str(card.Speed)),
-		field("Slots", strings.Join(card.Slots, ", ")),
-		field("Keywords", joinKeywords(card.Keywords)),
+		&pointsField,
+		&typeField,
+		&rankField,
+		&minisField,
+		&woundsField,
+	)
+
+	if card.Resilience > 0 {
+		resilienceField := field("Resilience", int2Str(card.Resilience))
+		fields = append(fields, &resilienceField)
+	} else {
+		courageField := field("Courage", int2Str(card.Courage))
+		fields = append(fields, &courageField)
+	}
+
+	defenseField := field("Defense", card.Defense)
+	speedField := field("Speed", int2Str(card.Speed))
+	slotsField := field("Slots", strings.Join(card.Slots, ", "))
+	keywordsField := field("Keywords", joinKeywords(card.Keywords))
+	fields = append(fields,
+		&defenseField,
+		&speedField,
+		&slotsField,
+		&keywordsField,
 	)
 
 	if len(card.CommandCards) > 0 {
-		fields = append(fields, field("Command Cards", strings.Join(card.CommandCards, ", ")))
+		commandCardsField := field("Command Cards", strings.Join(card.CommandCards, ", "))
+		fields = append(fields, &commandCardsField)
 	}
 
 	name := card.Name
 	if card.Unique {
 		name = "• " + name
-		fields = append(fields, field("Unique", checkMark))
+		uniqueField := field("Unique", checkMark)
+		fields = append(fields, &uniqueField)
 	}
 
 	if len(card.Weapons) > 0 {
-		weapons := []string{}
+		var weapons []string
 		for _, weapon := range card.Weapons {
-			weapons = append(weapons, weaponString(weapon))
+			weapons = append(weapons, weaponString(&weapon))
 		}
-		fields = append(fields, field("Weapons", strings.Join(weapons, "\n\n")))
+		weaponsField := field("Weapons", strings.Join(weapons, "\n\n"))
+		fields = append(fields, &weaponsField)
 	}
 
 	surgeStr := ""
@@ -157,7 +177,8 @@ func Unit(card *data.Unit) *discordgo.MessageEmbed {
 	}
 
 	if surgeStr != "" {
-		fields = append(fields, field("Surge", surgeStr))
+		surgeField := field("Surge", surgeStr)
+		fields = append(fields, &surgeField)
 	}
 
 	imageURL := "http://legion-hq.com/units/" + url.PathEscape(card.Name) + ".png"
@@ -165,7 +186,7 @@ func Unit(card *data.Unit) *discordgo.MessageEmbed {
 		imageURL = "http://legion-hq.com/units/Assault%20Tank.png"
 	}
 
-	return &discordgo.MessageEmbed{
+	return discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{Name: "Unit"},
 		Title:       name,
 		Description: card.Subtitle,
@@ -175,16 +196,16 @@ func Unit(card *data.Unit) *discordgo.MessageEmbed {
 	}
 }
 
-func field(name, value string) *discordgo.MessageEmbedField {
-	return &discordgo.MessageEmbedField{
+func field(name, value string) discordgo.MessageEmbedField {
+	return discordgo.MessageEmbedField{
 		Name:   name,
 		Value:  value,
 		Inline: true,
 	}
 }
 
-func newEmbedder(color int, title, description string) *discordgo.MessageEmbed {
-	return &discordgo.MessageEmbed{
+func newEmbedder(color int, title, description string) discordgo.MessageEmbed {
+	return discordgo.MessageEmbed{
 		Title:       title,
 		Description: description,
 		Color:       color,
@@ -196,11 +217,11 @@ func diceCount(dice *data.AttackDice) int {
 	black := dice.Black
 	red := dice.Red
 
-	return (white + black + red)
+	return white + black + red
 }
 
 func weaponString(weapon *data.Weapon) string {
-	weaponInfo := []string{}
+	var weaponInfo []string
 	if len(weapon.Name) > 0 {
 		weaponInfo = append(weaponInfo, "  "+weapon.Name)
 	}
@@ -217,7 +238,7 @@ func weaponString(weapon *data.Weapon) string {
 }
 
 func upgradeWeaponString(weapon *data.UpgradeWeapon) string {
-	weaponInfo := []string{}
+	var weaponInfo []string
 	if len(weapon.Name) > 0 {
 		weaponInfo = append(weaponInfo, "  "+weapon.Name)
 	}
@@ -233,8 +254,8 @@ func upgradeWeaponString(weapon *data.UpgradeWeapon) string {
 	return strings.Join(weaponInfo, "\n")
 }
 
-func joinKeywords(keywords []*data.Keyword) string {
-	ks := []string{}
+func joinKeywords(keywords []data.Keyword) string {
+	var ks []string
 	for _, keyword := range keywords {
 		ks = append(ks, keyword.Name)
 	}
