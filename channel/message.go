@@ -32,6 +32,7 @@ func messageSendEmbed(s *discordgo.Session, m *discordgo.MessageCreate, embed *d
 	}
 }
 
+// NewMessageHandler returns a handler function with a bound context for *lookup.Util and *search.Util access
 func NewMessageHandler(lookupUtil *lookup.Util, searchUtil *search.Util) interface{} {
 	// create the message handler function as a variable so we can return it with the parent's context
 	handler := func(s *discordgo.Session, m *discordgo.MessageCreate) {

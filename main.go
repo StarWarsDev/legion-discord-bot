@@ -59,6 +59,6 @@ func main() {
 	<-sc
 
 	// Cleanly close down the Discord session.
-	discord.Close()
-	os.RemoveAll(search.IndexKey)
+	_ = discord.Close()
+	_ = os.RemoveAll(search.IndexKey)
 }
