@@ -25,14 +25,6 @@ func Help() discordgo.MessageEmbed {
 			Value: "Displays search results across all data",
 		},
 		{
-			Name:  "!gonk",
-			Value: ":robot:",
-		},
-		{
-			Name:  "!lumpy",
-			Value: ":heart:",
-		},
-		{
 			Name:  "!help",
 			Value: "This help message",
 		},

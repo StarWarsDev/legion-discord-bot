@@ -47,21 +47,6 @@ func NewMessageHandler(lookupUtil *lookup.Util, searchUtil *search.Util) interfa
 			messageSendEmbed(s, m, &helpContent)
 		}
 
-		if m.Content == "!gonk" {
-			gonkContent := commands.Gonk()
-			messageSendEmbed(s, m, &gonkContent)
-		}
-
-		if m.Content == "!lumpy" {
-			randomLumpyURL := commands.Lumpy()
-
-			messageSendEmbed(s, m, &discordgo.MessageEmbed{
-				Image: &discordgo.MessageEmbedImage{
-					URL: randomLumpyURL,
-				},
-			})
-		}
-
 		if strings.HasPrefix(m.Content, "!unit") {
 			response := commands.Unit(m, lookupUtil)
 			messageSendEmbed(s, m, &response)
