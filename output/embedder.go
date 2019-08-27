@@ -11,7 +11,6 @@ import (
 )
 
 const (
-	colorSuccess     = 0x00AE86
 	colorError       = 0xE84A4A
 	colorInfo        = 0xF2E82B
 	colorCommandCard = 0x4287f5
