@@ -31,6 +31,9 @@ func main() {
 		panic("No discord token provided! Try passing it with the '-t' flag or setting 'DISCORD_TOKEN' in the environment.")
 	}
 
+	// get the legion-data version from the environment
+	legionDataVersion := os.Getenv("LEGION_DATA_VERSION")
+
 	legionData := data.LoadLegionData()
 	lookupUtil := lookup.NewUtil(&legionData)
 	searchUtil := search.NewUtil(&legionData, &lookupUtil)
@@ -47,9 +50,17 @@ func main() {
 
 	// open the connection to Discord
 	err = discord.Open()
-
 	if err != nil {
 		panic(err)
+	}
+
+	if legionDataVersion != "" {
+		versionMessage := fmt.Sprintf("legion-data version %s", legionDataVersion)
+		fmt.Println(versionMessage)
+		err = discord.UpdateStatus(0, versionMessage)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	// Wait here until CTRL-C or other term signal is received.
