@@ -2,6 +2,7 @@ BINARY_NAME=legion-discord-bot
 DOCKER_IMAGE_NAME=stevegood/legion-discord-bot
 TOKEN=your_mom_has_a_token
 VERSION=SNAPSHOT
+LEGION_DATA_VERSION=master
 
 DOCKERCMD=docker
 DOCKERBUILD=$(DOCKERCMD) build
@@ -20,7 +21,12 @@ all: clean generate-json build
 checkout-legion-data:
 	$(GITCLONE) https://github.com/andrelind/legion-data.git
 
-generate-json: checkout-legion-data
+checkout-ld-tag: checkout-legion-data
+	cd legion-data && \
+	$(GITCMD) fetch --all && \
+	$(GITCMD) checkout $(LEGION_DATA_VERSION)
+
+generate-json: checkout-ld-tag
 	cd legion-data && \
 	$(YARNCMD) && \
 	$(YARNJSON) && \
