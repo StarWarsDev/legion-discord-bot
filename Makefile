@@ -41,8 +41,12 @@ run:
 	DISCORD_TOKEN=$(TOKEN) LEGION_DATA_VERSION=$(LEGION_DATA_VERSION) ./$(BINARY_NAME)
 
 docker:
-	$(DOCKERBUILD) --squash -t $(DOCKER_IMAGE_NAME):$(VERSION) . && \
-	$(DOCKERBUILD) --squash -t $(DOCKER_IMAGE_NAME):latest .
+	$(DOCKERBUILD) --build-arg LEGION_DATA_VERSION=$(LEGION_DATA_VERSION) --squash -t $(DOCKER_IMAGE_NAME):$(VERSION) . && \
+	$(DOCKERBUILD) --build-arg LEGION_DATA_VERSION=$(LEGION_DATA_VERSION) --squash -t $(DOCKER_IMAGE_NAME):latest .
+
+docker-push:
+	$(DOCKERCMD) push $(DOCKER_IMAGE_NAME):$(VERSION) && \
+	$(DOCKERCMD) push $(DOCKER_IMAGE_NAME):latest
 
 clean:
 	rm -f ./$(BINARY_NAME)
