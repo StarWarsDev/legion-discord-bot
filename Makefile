@@ -38,10 +38,11 @@ build:
 	$(GOBUILD) .
 
 run:
-	./$(BINARY_NAME) -t $(TOKEN)
+	DISCORD_TOKEN=$(TOKEN) LEGION_DATA_VERSION=$(LEGION_DATA_VERSION) ./$(BINARY_NAME)
 
 docker:
-	$(DOCKERBUILD) --squash -t $(DOCKER_IMAGE_NAME):$(VERSION) .
+	$(DOCKERBUILD) --squash -t $(DOCKER_IMAGE_NAME):$(VERSION) . && \
+	$(DOCKERBUILD) --squash -t $(DOCKER_IMAGE_NAME):latest .
 
 clean:
 	rm -f ./$(BINARY_NAME)
