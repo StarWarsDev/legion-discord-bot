@@ -185,6 +185,12 @@ func Unit(card *data.Unit) discordgo.MessageEmbed {
 	if card.LDF == "tx225gavwoccupiercombatassaulttank" {
 		imageURL = "http://legion-hq.com/units/Assault%20Tank.png"
 	}
+	if card.LDF == "rebelofficer" {
+		imageURL = "http://legion-hq.com/units/Rebel%20Commander.png"
+	}
+	if card.LDF == "imperialofficer" {
+		imageURL = "http://legion-hq.com/units/Imperial%20Commander.png"
+	}
 
 	return discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{Name: "Unit"},
