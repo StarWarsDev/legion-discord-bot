@@ -46,6 +46,14 @@ func CommandCard(card *data.CommandCard) discordgo.MessageEmbed {
 
 	imageURL := "http://legion-hq.com/commands/" + url.PathEscape(card.Name) + ".png"
 
+	if card.LDF == "andnowyouwilldie" {
+		imageURL = "http://legion-hq.com/commands/And%20Now%20You%20Will%20Die.png"
+	}
+
+	if card.LDF == "giveintoyouranger" {
+		imageURL = "http://legion-hq.com/commands/Give%20In%20To%20Your%20Anger.png"
+	}
+
 	return discordgo.MessageEmbed{
 		Author:      &discordgo.MessageEmbedAuthor{Name: "Command"},
 		Title:       card.Name,
