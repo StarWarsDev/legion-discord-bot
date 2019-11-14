@@ -14,3 +14,5 @@ require (
 	github.com/steveyen/gtreap v0.0.0-20150807155958-0abe01ef9be2 // indirect
 	golang.org/x/net v0.0.0-20190628185345-da137c7871d7 // indirect
 )
+
+go 1.13
