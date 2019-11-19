@@ -18,8 +18,8 @@ func Unit(m *discordgo.MessageCreate, lookupUtil *lookup.Util) discordgo.Message
 			m.Author.Mention()+", the `!unit` command requires a unit card name. Please try again using this format `!unit <unit card name>`",
 		)
 	} else {
-		if unitName == "sexyrexy" {
-			unitName = "clonecaptainrex"
+		if strings.ToLower(unitName) == "sexy rexy" {
+			unitName = "clone captain rex"
 		}
 
 		unit := lookupUtil.LookupUnit(unitName)

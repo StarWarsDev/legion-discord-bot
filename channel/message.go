@@ -67,8 +67,8 @@ func NewMessageHandler(lookupUtil *lookup.Util, searchUtil *search.Util) interfa
 			searchText := strings.Replace(m.Content, "!search", "", 1)
 			searchText = strings.TrimSpace(searchText)
 
-			if searchText == "sexyrexy" {
-				searchText = "clonecaptainrex"
+			if strings.ToLower(searchText) == "sexy rexy" {
+				searchText = "clone captain rex"
 			}
 
 			if strings.ToLower(searchText) == "help" {
