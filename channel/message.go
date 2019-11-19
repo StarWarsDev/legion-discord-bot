@@ -67,6 +67,10 @@ func NewMessageHandler(lookupUtil *lookup.Util, searchUtil *search.Util) interfa
 			searchText := strings.Replace(m.Content, "!search", "", 1)
 			searchText = strings.TrimSpace(searchText)
 
+			if searchText == "sexyrexy" {
+				searchText = "clonecaptainrex"
+			}
+
 			if strings.ToLower(searchText) == "help" {
 				outputInfo := output.Info("Search Help", "Find more info on how to structure your search here: http://blevesearch.com/docs/Query-String-Query/")
 				messageSendEmbed(s, m, &outputInfo)
