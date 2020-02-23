@@ -4,10 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"github.com/StarWarsDev/legion-discord-bot/channel"
-	"github.com/StarWarsDev/legion-discord-bot/data"
-	"github.com/StarWarsDev/legion-discord-bot/lookup"
 	"github.com/StarWarsDev/legion-discord-bot/search"
 	"github.com/bwmarrin/discordgo"
+	"github.com/shurcooL/graphql"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,7 +17,9 @@ func main() {
 
 	// init all the data
 	var token string
+	var archivesURL string
 	flag.StringVar(&token, "t", "", "Bot Token")
+	flag.StringVar(&archivesURL, "url", "https://sw-legion-archives.herokuapp.com/graphql", "Archives GraphQL URL")
 	flag.Parse()
 
 	if token == "" {
@@ -31,13 +32,6 @@ func main() {
 		panic("No discord token provided! Try passing it with the '-t' flag or setting 'DISCORD_TOKEN' in the environment.")
 	}
 
-	// get the legion-data version from the environment
-	legionDataVersion := os.Getenv("LEGION_DATA_VERSION")
-
-	legionData := data.LoadLegionData()
-	lookupUtil := lookup.NewUtil(&legionData)
-	searchUtil := search.NewUtil(&legionData, &lookupUtil)
-
 	// create a new connection to Discord
 	discord, err := discordgo.New("Bot " + token)
 
@@ -45,22 +39,16 @@ func main() {
 		panic(err)
 	}
 
+	// create the graphql client
+	client := graphql.NewClient(archivesURL, nil)
+
 	// create and add the message handler
-	discord.AddHandler(channel.NewMessageHandler(&lookupUtil, &searchUtil))
+	discord.AddHandler(channel.NewMessageHandler(client))
 
 	// open the connection to Discord
 	err = discord.Open()
 	if err != nil {
 		panic(err)
-	}
-
-	if legionDataVersion != "" {
-		versionMessage := fmt.Sprintf("legion-data version %s", legionDataVersion)
-		fmt.Println(versionMessage)
-		err = discord.UpdateStatus(0, versionMessage)
-		if err != nil {
-			panic(err)
-		}
 	}
 
 	// Wait here until CTRL-C or other term signal is received.

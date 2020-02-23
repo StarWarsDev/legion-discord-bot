@@ -10,20 +10,24 @@ func Help() discordgo.MessageEmbed {
 	fields := []*discordgo.MessageEmbedField{
 		{
 			Name:  "!unit <unit card name>",
-			Value: "Displays information about the specified unit",
+			Value: "Displays the specified unit",
 		},
 		{
 			Name:  "!upgrade <upgrade card name>",
-			Value: "Displays information about the specified upgrade",
+			Value: "Displays the specified upgrade",
 		},
 		{
 			Name:  "!command <command card name>",
-			Value: "Displays information about the specified command card",
+			Value: "Displays the specified command card",
 		},
 		{
-			Name:  "!search <search term>",
-			Value: "Displays search results across all data",
+			Name:  "!keyword <keyword name>",
+			Value: "Displays the specified keyword",
 		},
+		//{
+		//	Name:  "!search <search term>",
+		//	Value: "Displays search results across all data",
+		//},
 		{
 			Name:  "!help",
 			Value: "This help message",
