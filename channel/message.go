@@ -3,9 +3,10 @@ package channel
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/StarWarsDev/legion-discord-bot/commands"
+	"log"
 	"strings"
 
-	"github.com/StarWarsDev/legion-discord-bot/commands"
 	"github.com/StarWarsDev/legion-discord-bot/internal/data"
 	"github.com/StarWarsDev/legion-discord-bot/output"
 	"github.com/StarWarsDev/legion-discord-bot/utils"
@@ -15,17 +16,17 @@ import (
 func messageSendEmbed(s *discordgo.Session, m *discordgo.MessageCreate, embed *discordgo.MessageEmbed) {
 	_, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Embedded item as follows")
-		fmt.Printf("%d Fields\n", len(embed.Fields))
+		log.Println(err)
+		log.Println("Embedded item as follows")
+		log.Printf("%d Fields\n", len(embed.Fields))
 
 		b, err := json.Marshal(embed)
 		if err != nil {
-			fmt.Println("Could not unmarshal data")
-			fmt.Println(err)
+			log.Println("Could not unmarshal data")
+			log.Println(err)
 		}
 
-		fmt.Println(string(b))
+		log.Println(string(b))
 
 		outputError := output.Error("Failed to render", utils.WithTemplate("There was a problem rendering the %s \"%s\"", embed.Author.Name, embed.Title))
 		_, _ = s.ChannelMessageSendEmbed(m.ChannelID, &outputError)
@@ -42,77 +43,124 @@ func NewMessageHandler(client *data.ArchivesClient) interface{} {
 			return
 		}
 
-		if m.Content == "!help" {
-			helpContent := commands.Help()
-			messageSendEmbed(s, m, &helpContent)
-		}
+		// split the message so we can interrogate it for intention
+		cmdParts := strings.Split(m.Content, " ")
+		lenParts := len(cmdParts)
 
-		if strings.HasPrefix(m.Content, "!keyword") {
-			// split the message so we can interrogate it for intention
-			cmdParts := strings.Split(m.Content, " ")
-			if len(cmdParts) > 1 {
-				// by default, assume the field we want to search is "name"
-				field := "name"
-				// by default, assume anything after the command is the search term for the name field
-				term := strings.TrimSpace(strings.Replace(m.Content, "!keyword", "", 1))
-				// if there are more than 2 parts in the message assume that the search is more complex
-				if len(cmdParts) > 2 {
-					// assume that the field to be searched is following the command
-					field = cmdParts[1]
-					// assume that the rest of the body is the search term
-					term = strings.TrimSpace(strings.Replace(term, field, "", 1))
+		if lenParts > 0 && strings.HasPrefix(cmdParts[0], "!") {
+			command := cmdParts[0]
+			args := []string{}
+			end := lenParts
+			if lenParts > 1 {
+				if end == 1 {
+					end = 2
 				}
+				args = cmdParts[1:end]
+			}
+
+			lenArgs := len(args)
+			argsEnd := lenArgs
+			// determine the end of the args
+			if lenArgs == 1 {
+				argsEnd = 2
+			}
+
+			field := ""
+			term := ""
+
+			// if this is not the help command then parse the incoming message
+			if command != "!help" {
+				// by default, assume the field we want to search is "name"
+				field = "name"
+				// by default, assume anything after the command is the search term for the name field
+				term = strings.Join(args, " ")
+
+				// if there are more than 1 args assume that the search is more complex
+				if lenArgs > 1 {
+					field = args[0]
+					term = strings.Join(args[1:argsEnd], " ")
+				}
+
+				// clean up the term and field, just in case
+				field = strings.TrimSpace(field)
+				term = strings.TrimSpace(term)
+
 				// turn all terms into case insensitive regex searches
 				term = fmt.Sprintf("(?i)(%s)", term)
+			}
+
+			log.Println(m.Author.Username+" :", command, field, term)
+
+			if command != "!help" && (field == "" || term == "(?i)()") {
+				// this is an invalid command execution, respond with the help command.
+				log.Println("empty field or term detected, this won't do")
+				sendHelp(s, m)
+				// stop trying to process the command
+				return
+			}
+
+			switch command {
+			case "!help":
+				sendHelp(s, m)
+				return
+			case "!keyword":
 				// get the keywords from the archives client
 				keywords := client.GetKeywords(field, term)
-				// TODO: for each result, send an embedded response message
-				fmt.Println(keywords)
+				// for each result, send an embedded response message
+				for _, keyword := range keywords {
+					response := commands.Keyword(m, &keyword)
+					messageSendEmbed(s, m, &response)
+				}
 			}
+
+			//if strings.HasPrefix(m.Content, "!unit") {
+			//	response := commands.Unit(m, lookupUtil)
+			//	messageSendEmbed(s, m, &response)
+			//}
+
+			//if strings.HasPrefix(m.Content, "!upgrade") {
+			//	response := commands.Upgrade(m, lookupUtil)
+			//	messageSendEmbed(s, m, &response)
+			//}
+
+			//if strings.HasPrefix(m.Content, "!command") {
+			//	response := commands.Command(m, lookupUtil)
+			//
+			//	messageSendEmbed(s, m, &response)
+			//}
+
+			//if strings.HasPrefix(m.Content, "!search") {
+			//	searchText := strings.Replace(m.Content, "!search", "", 1)
+			//	searchText = strings.TrimSpace(searchText)
+			//
+			//	if strings.ToLower(searchText) == "sexy rexy" {
+			//		searchText = "clone captain rex"
+			//	}
+			//
+			//	if strings.ToLower(searchText) == "help" {
+			//		outputInfo := output.Info("Search Help", "Find more info on how to structure your search here: http://blevesearch.com/docs/Query-String-Query/")
+			//		messageSendEmbed(s, m, &outputInfo)
+			//	} else {
+			//
+			//		if searchText == "" {
+			//			response := m.Author.Mention() + ", the `!search` command requires a search term. Please try again using this format `!search <search term>`"
+			//			outputError := output.Error("Bad input", response)
+			//			messageSendEmbed(s, m, &outputError)
+			//		} else {
+			//			embeddedResults := searchUtil.FullSearch(searchText)
+			//			for _, embed := range embeddedResults {
+			//				messageSendEmbed(s, m, &embed)
+			//			}
+			//		}
+			//	}
+			//}
 		}
-
-		//if strings.HasPrefix(m.Content, "!unit") {
-		//	response := commands.Unit(m, lookupUtil)
-		//	messageSendEmbed(s, m, &response)
-		//}
-
-		//if strings.HasPrefix(m.Content, "!upgrade") {
-		//	response := commands.Upgrade(m, lookupUtil)
-		//	messageSendEmbed(s, m, &response)
-		//}
-
-		//if strings.HasPrefix(m.Content, "!command") {
-		//	response := commands.Command(m, lookupUtil)
-		//
-		//	messageSendEmbed(s, m, &response)
-		//}
-
-		//if strings.HasPrefix(m.Content, "!search") {
-		//	searchText := strings.Replace(m.Content, "!search", "", 1)
-		//	searchText = strings.TrimSpace(searchText)
-		//
-		//	if strings.ToLower(searchText) == "sexy rexy" {
-		//		searchText = "clone captain rex"
-		//	}
-		//
-		//	if strings.ToLower(searchText) == "help" {
-		//		outputInfo := output.Info("Search Help", "Find more info on how to structure your search here: http://blevesearch.com/docs/Query-String-Query/")
-		//		messageSendEmbed(s, m, &outputInfo)
-		//	} else {
-		//
-		//		if searchText == "" {
-		//			response := m.Author.Mention() + ", the `!search` command requires a search term. Please try again using this format `!search <search term>`"
-		//			outputError := output.Error("Bad input", response)
-		//			messageSendEmbed(s, m, &outputError)
-		//		} else {
-		//			embeddedResults := searchUtil.FullSearch(searchText)
-		//			for _, embed := range embeddedResults {
-		//				messageSendEmbed(s, m, &embed)
-		//			}
-		//		}
-		//	}
-		//}
 	}
 
 	return handler
+}
+
+func sendHelp(s *discordgo.Session, m *discordgo.MessageCreate) {
+	helpContent := commands.Help()
+	messageSendEmbed(s, m, &helpContent)
 }
