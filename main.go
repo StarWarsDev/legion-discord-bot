@@ -3,13 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/StarWarsDev/legion-discord-bot/channel"
-	"github.com/StarWarsDev/legion-discord-bot/search"
-	"github.com/bwmarrin/discordgo"
-	"github.com/shurcooL/graphql"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/StarWarsDev/legion-discord-bot/channel"
+	"github.com/StarWarsDev/legion-discord-bot/internal/data"
+	"github.com/StarWarsDev/legion-discord-bot/search"
+	"github.com/bwmarrin/discordgo"
 )
 
 func main() {
@@ -40,10 +41,10 @@ func main() {
 	}
 
 	// create the graphql client
-	client := graphql.NewClient(archivesURL, nil)
+	client := data.NewArchivesClient(archivesURL)
 
 	// create and add the message handler
-	discord.AddHandler(channel.NewMessageHandler(client))
+	discord.AddHandler(channel.NewMessageHandler(&client))
 
 	// open the connection to Discord
 	err = discord.Open()

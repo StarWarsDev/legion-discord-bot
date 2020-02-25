@@ -3,11 +3,13 @@ package channel
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/StarWarsDev/legion-discord-bot/commands"
+	"github.com/StarWarsDev/legion-discord-bot/internal/data"
 	"github.com/StarWarsDev/legion-discord-bot/output"
 	"github.com/StarWarsDev/legion-discord-bot/utils"
 	"github.com/bwmarrin/discordgo"
-	"github.com/shurcooL/graphql"
 )
 
 func messageSendEmbed(s *discordgo.Session, m *discordgo.MessageCreate, embed *discordgo.MessageEmbed) {
@@ -31,7 +33,7 @@ func messageSendEmbed(s *discordgo.Session, m *discordgo.MessageCreate, embed *d
 }
 
 // NewMessageHandler returns a handler function with a bound context for *lookup.Util and *search.Util access
-func NewMessageHandler(client *graphql.Client) interface{} {
+func NewMessageHandler(client *data.ArchivesClient) interface{} {
 	// create the message handler function as a variable so we can return it with the parent's context
 	handler := func(s *discordgo.Session, m *discordgo.MessageCreate) {
 		// Ignore all messages created by the bot itself
@@ -43,6 +45,30 @@ func NewMessageHandler(client *graphql.Client) interface{} {
 		if m.Content == "!help" {
 			helpContent := commands.Help()
 			messageSendEmbed(s, m, &helpContent)
+		}
+
+		if strings.HasPrefix(m.Content, "!keyword") {
+			// split the message so we can interrogate it for intention
+			cmdParts := strings.Split(m.Content, " ")
+			if len(cmdParts) > 1 {
+				// by default, assume the field we want to search is "name"
+				field := "name"
+				// by default, assume anything after the command is the search term for the name field
+				term := strings.TrimSpace(strings.Replace(m.Content, "!keyword", "", 1))
+				// if there are more than 2 parts in the message assume that the search is more complex
+				if len(cmdParts) > 2 {
+					// assume that the field to be searched is following the command
+					field = cmdParts[1]
+					// assume that the rest of the body is the search term
+					term = strings.TrimSpace(strings.Replace(term, field, "", 1))
+				}
+				// turn all terms into case insensitive regex searches
+				term = fmt.Sprintf("(?i)(%s)", term)
+				// get the keywords from the archives client
+				keywords := client.GetKeywords(field, term)
+				// TODO: for each result, send an embedded response message
+				fmt.Println(keywords)
+			}
 		}
 
 		//if strings.HasPrefix(m.Content, "!unit") {
