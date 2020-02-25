@@ -1,7 +1,7 @@
 version: "3"
 
 services:
-  bot:
+  legion-info-dev:
     build:
       context: .
       dockerfile: Dockerfile
