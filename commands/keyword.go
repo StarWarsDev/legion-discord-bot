@@ -5,7 +5,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func Keyword(m *discordgo.MessageCreate, keyword *data.Keyword) discordgo.MessageEmbed {
+func Keyword(keyword *data.Keyword) discordgo.MessageEmbed {
 	response := discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{
 			Name: "Keyword",

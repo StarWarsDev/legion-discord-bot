@@ -33,14 +33,14 @@ func Info(title, description string) discordgo.MessageEmbed {
 func CommandCard(card *data.CommandCard) discordgo.MessageEmbed {
 	var fields []*discordgo.MessageEmbedField
 
-	pipsField := field("Pips", int2Str(card.Pips))
-	ordersField := field("Orders", card.Orders)
+	pipsField := Field("Pips", int2Str(card.Pips))
+	ordersField := Field("Orders", card.Orders)
 
 	fields = append(fields, &pipsField, &ordersField)
 
 	if diceCount(&card.Weapon.Dice) > 0 {
 		weapon := weaponString(&card.Weapon)
-		weaponField := field("Weapon", weapon)
+		weaponField := Field("Weapon", weapon)
 		fields = append(fields, &weaponField)
 	}
 
@@ -70,29 +70,29 @@ func CommandCard(card *data.CommandCard) discordgo.MessageEmbed {
 func Upgrade(card *data.Upgrade) discordgo.MessageEmbed {
 	var fields []*discordgo.MessageEmbedField
 
-	pointsField := field("Points", int2Str(card.Points))
-	slotField := field("Slot", card.Slot)
+	pointsField := Field("Points", int2Str(card.Points))
+	slotField := Field("Slot", card.Slot)
 
 	fields = append(fields, &pointsField, &slotField)
 
 	if card.Exhaust {
-		exhaustibleField := field("Exhaustible", checkMark)
+		exhaustibleField := Field("Exhaustible", checkMark)
 		fields = append(fields, &exhaustibleField)
 	}
 
 	if card.Restrictions.Name != "" {
-		restrictionsField := field("Restrictions", card.Restrictions.Name)
+		restrictionsField := Field("Restrictions", card.Restrictions.Name)
 		fields = append(fields, &restrictionsField)
 	}
 
 	if len(card.Keywords) > 0 {
-		keywordsField := field("Keywords", joinKeywords(card.Keywords))
+		keywordsField := Field("Keywords", joinKeywords(card.Keywords))
 		fields = append(fields, &keywordsField)
 	}
 
 	if diceCount(&card.Weapon.Dice) > 0 {
 		weapon := upgradeWeaponString(&card.Weapon)
-		weaponField := field("Weapon", weapon)
+		weaponField := Field("Weapon", weapon)
 		fields = append(fields, &weaponField)
 	}
 
@@ -118,11 +118,11 @@ func Upgrade(card *data.Upgrade) discordgo.MessageEmbed {
 func Unit(card *data.Unit) discordgo.MessageEmbed {
 	var fields []*discordgo.MessageEmbedField
 
-	pointsField := field("Points", int2Str(card.Points))
-	typeField := field("Type", card.Type)
-	rankField := field("Rank", card.Rank)
-	minisField := field("Minis", int2Str(card.Minis))
-	woundsField := field("Wounds", int2Str(card.Wounds))
+	pointsField := Field("Points", int2Str(card.Points))
+	typeField := Field("Type", card.Type)
+	rankField := Field("Rank", card.Rank)
+	minisField := Field("Minis", int2Str(card.Minis))
+	woundsField := Field("Wounds", int2Str(card.Wounds))
 
 	fields = append(fields,
 		&pointsField,
@@ -133,17 +133,17 @@ func Unit(card *data.Unit) discordgo.MessageEmbed {
 	)
 
 	if card.Resilience > 0 {
-		resilienceField := field("Resilience", int2Str(card.Resilience))
+		resilienceField := Field("Resilience", int2Str(card.Resilience))
 		fields = append(fields, &resilienceField)
 	} else {
-		courageField := field("Courage", int2Str(card.Courage))
+		courageField := Field("Courage", int2Str(card.Courage))
 		fields = append(fields, &courageField)
 	}
 
-	defenseField := field("Defense", card.Defense)
-	speedField := field("Speed", int2Str(card.Speed))
-	slotsField := field("Slots", strings.Join(card.Slots, ", "))
-	keywordsField := field("Keywords", joinKeywords(card.Keywords))
+	defenseField := Field("Defense", card.Defense)
+	speedField := Field("Speed", int2Str(card.Speed))
+	slotsField := Field("Slots", strings.Join(card.Slots, ", "))
+	keywordsField := Field("Keywords", joinKeywords(card.Keywords))
 	fields = append(fields,
 		&defenseField,
 		&speedField,
@@ -152,14 +152,14 @@ func Unit(card *data.Unit) discordgo.MessageEmbed {
 	)
 
 	if len(card.CommandCards) > 0 {
-		commandCardsField := field("Command Cards", strings.Join(card.CommandCards, ", "))
+		commandCardsField := Field("Command Cards", strings.Join(card.CommandCards, ", "))
 		fields = append(fields, &commandCardsField)
 	}
 
 	name := card.Name
 	if card.Unique {
 		name = "• " + name
-		uniqueField := field("Unique", checkMark)
+		uniqueField := Field("Unique", checkMark)
 		fields = append(fields, &uniqueField)
 	}
 
@@ -168,7 +168,7 @@ func Unit(card *data.Unit) discordgo.MessageEmbed {
 		for _, weapon := range card.Weapons {
 			weapons = append(weapons, weaponString(&weapon))
 		}
-		weaponsField := field("Weapons", strings.Join(weapons, "\n\n"))
+		weaponsField := Field("Weapons", strings.Join(weapons, "\n\n"))
 		fields = append(fields, &weaponsField)
 	}
 
@@ -185,7 +185,7 @@ func Unit(card *data.Unit) discordgo.MessageEmbed {
 	}
 
 	if surgeStr != "" {
-		surgeField := field("Surge", surgeStr)
+		surgeField := Field("Surge", surgeStr)
 		fields = append(fields, &surgeField)
 	}
 
@@ -210,7 +210,8 @@ func Unit(card *data.Unit) discordgo.MessageEmbed {
 	}
 }
 
-func field(name, value string) discordgo.MessageEmbedField {
+// Field creates an embedded field
+func Field(name, value string) discordgo.MessageEmbedField {
 	return discordgo.MessageEmbedField{
 		Name:   name,
 		Value:  value,

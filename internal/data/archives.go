@@ -2,16 +2,12 @@ package data
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/shurcooL/graphql"
 )
-
-// Keyword is a Legion keyword
-type Keyword struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
 
 // ArchivesClient handles communication to the Archives
 type ArchivesClient struct {
@@ -36,6 +32,25 @@ func (client *ArchivesClient) GetKeywords(field, term string) []Keyword {
 	}
 
 	return query.Keywords
+}
+
+// GetCommandCards get the command cards from the archives
+func (client *ArchivesClient) GetCommandCards(field, term string) []CommandCard {
+	var query struct {
+		Commands []CommandCard `graphql:"commands(query: $query)"`
+	}
+
+	variables := map[string]interface{}{
+		"query": graphql.String(fmt.Sprintf("%s:%s", field, term)),
+	}
+
+	err := client.gqlClient.Query(context.Background(), &query, variables)
+	if err != nil {
+		j, _ := json.Marshal(&query)
+		log.Println(err, string(j), variables)
+	}
+
+	return query.Commands
 }
 
 // NewArchivesClient creates and returns a new ArchivesClient

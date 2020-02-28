@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/StarWarsDev/legion-discord-bot/commands"
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/StarWarsDev/legion-discord-bot/internal/data"
@@ -49,21 +50,6 @@ func NewMessageHandler(client *data.ArchivesClient) interface{} {
 
 		if lenParts > 0 && strings.HasPrefix(cmdParts[0], "!") {
 			command := cmdParts[0]
-			args := []string{}
-			end := lenParts
-			if lenParts > 1 {
-				if end == 1 {
-					end = 2
-				}
-				args = cmdParts[1:end]
-			}
-
-			lenArgs := len(args)
-			argsEnd := lenArgs
-			// determine the end of the args
-			if lenArgs == 1 {
-				argsEnd = 2
-			}
 
 			field := ""
 			term := ""
@@ -72,24 +58,30 @@ func NewMessageHandler(client *data.ArchivesClient) interface{} {
 			if command != "!help" {
 				// by default, assume the field we want to search is "name"
 				field = "name"
-				// by default, assume anything after the command is the search term for the name field
-				term = strings.Join(args, " ")
+				// set the default term equal to the message body minus the command
+				term = strings.TrimSpace(strings.Replace(m.Content, command, "", -1))
+				args := strings.Split(term, "=")
+				lenArgs := len(args)
 
 				// if there are more than 1 args assume that the search is more complex
 				if lenArgs > 1 {
 					field = args[0]
-					term = strings.Join(args[1:argsEnd], " ")
+					term = strings.TrimSpace(args[1])
 				}
 
 				// clean up the term and field, just in case
-				field = strings.TrimSpace(field)
+				field = strings.ToLower(strings.TrimSpace(field))
 				term = strings.TrimSpace(term)
 
-				// turn all terms into case insensitive regex searches
-				term = fmt.Sprintf("(?i)(%s)", term)
+				// determine if the term should be a regex
+				_, err := strconv.Atoi(term)
+				if err != nil {
+					// if the term could not be converted to an int then treat is as a regex string
+					term = fmt.Sprintf("(?i)(%s)", term)
+				}
 			}
 
-			log.Println(m.Author.Username+" :", command, field, term)
+			log.Println(m.Author.Username+" :", command, field, "=", term)
 
 			if command != "!help" && (field == "" || term == "(?i)()") {
 				// this is an invalid command execution, respond with the help command.
@@ -102,13 +94,20 @@ func NewMessageHandler(client *data.ArchivesClient) interface{} {
 			switch command {
 			case "!help":
 				sendHelp(s, m)
-				return
 			case "!keyword":
 				// get the keywords from the archives client
 				keywords := client.GetKeywords(field, term)
 				// for each result, send an embedded response message
 				for _, keyword := range keywords {
-					response := commands.Keyword(m, &keyword)
+					response := commands.Keyword(&keyword)
+					messageSendEmbed(s, m, &response)
+				}
+			case "!command":
+				// get the command cards from the archives client
+				commandCards := client.GetCommandCards(field, term)
+				// for each result, send an embedded response message
+				for _, card := range commandCards {
+					response := commands.Command(&card)
 					messageSendEmbed(s, m, &response)
 				}
 			}
