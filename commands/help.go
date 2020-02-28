@@ -38,7 +38,7 @@ func Help() discordgo.MessageEmbed {
 `+"`FIELD_NAME`"+` is optional and defaults to "name" and can be any top level field on the item being queried.
 
 **Example:** `+"`!keyword inspire`"+` finds all keywords with "inspire" in the name.
-**Example 2:** `+"`!keyword description=rally`"+` finds all keywords that have the word "rally" in the description.
+**Example 2:** `+"`!keyword description = rally`"+` finds all keywords that have the word "rally" in the description.
 
 **Commands:**`)
 
