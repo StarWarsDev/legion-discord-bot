@@ -41,7 +41,7 @@ func Help() discordgo.MessageEmbed {
 **Example 2:** `+"`!keyword description ~ rally`"+` finds all keywords that have the word "rally" in the description.
 
 **DM**: By default the bot will respond in the channel where the command was issued.
-If you like to have the bot send you a DM instead just mention it anywhere in the message.
+If you would like to have the bot send you a DM instead just mention it anywhere in the message.
 
 **Commands:**`)
 
