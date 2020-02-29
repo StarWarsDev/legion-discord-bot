@@ -10,20 +10,24 @@ import (
 
 	"github.com/StarWarsDev/legion-discord-bot/internal/data"
 	"github.com/StarWarsDev/legion-discord-bot/output"
-	"github.com/StarWarsDev/legion-discord-bot/utils"
 	"github.com/bwmarrin/discordgo"
 )
 
+var validCommands = map[string]bool{
+	"!help":    true,
+	"!unit":    true,
+	"!command": true,
+	"!keyword": true,
+	"!upgrade": true,
+}
+
+func isValidCommand(command string) bool {
+	_, ok := validCommands[command]
+	return ok
+}
+
 func messageSendEmbed(dm bool, s *discordgo.Session, m *discordgo.MessageCreate, embed *discordgo.MessageEmbed) {
-	channelID := m.ChannelID
-	if dm {
-		channel, err := s.UserChannelCreate(m.Author.ID)
-		if err != nil {
-			log.Println("Error creating private channel with user", m.Author.Username, err)
-		} else {
-			channelID = channel.ID
-		}
-	}
+	channelID := channelID(m, dm, s)
 
 	_, err := s.ChannelMessageSendEmbed(channelID, embed)
 	if err != nil {
@@ -39,9 +43,29 @@ func messageSendEmbed(dm bool, s *discordgo.Session, m *discordgo.MessageCreate,
 
 		log.Println(string(b))
 
-		outputError := output.Error("Failed to render", utils.WithTemplate("There was a problem rendering the %s \"%s\"", embed.Author.Name, embed.Title))
-		_, _ = s.ChannelMessageSendEmbed(channelID, &outputError)
+		title := "Failed to render"
+		description := fmt.Sprintf("There was a problem rendering the %s \"%s\"", embed.Author.Name, embed.Title)
+		errorMessageSendEmbed(title, description, dm, s, m)
 	}
+}
+
+func channelID(m *discordgo.MessageCreate, dm bool, s *discordgo.Session) string {
+	channelID := m.ChannelID
+	if dm {
+		channel, err := s.UserChannelCreate(m.Author.ID)
+		if err != nil {
+			log.Println("Error creating private channel with user", m.Author.Username, err)
+		} else {
+			channelID = channel.ID
+		}
+	}
+	return channelID
+}
+
+func errorMessageSendEmbed(title, description string, dm bool, s *discordgo.Session, m *discordgo.MessageCreate) {
+	channelID := channelID(m, dm, s)
+	outputError := output.Error(title, description)
+	_, _ = s.ChannelMessageSendEmbed(channelID, &outputError)
 }
 
 // NewMessageHandler returns a handler function with a bound context for *lookup.Util and *search.Util access
@@ -73,76 +97,78 @@ func NewMessageHandler(client *data.ArchivesClient) interface{} {
 
 			log.Println(m.Author.Username, ":", command, field, "~", term)
 
-			if command != "!help" && (field == "" || term == "(?i)()") {
-				// this is an invalid command execution, respond with the help command.
-				log.Println("empty field or term detected, this won't do")
-				sendHelp(isMentioned, s, m)
-				// stop trying to process the command
-				return
-			}
-
-			switch command {
-			case "!help":
-				sendHelp(isMentioned, s, m)
-			case "!keyword":
-				// get the keywords from the archives client
-				keywords := client.GetKeywords(field, term)
-				// for each result, send an embedded response message
-				for _, keyword := range keywords {
-					response := commands.Keyword(&keyword)
-					messageSendEmbed(isMentioned, s, m, &response)
+			if isValidCommand(command) {
+				if command != "!help" && (field == "" || term == "(?i)()") {
+					// this is an invalid command execution, respond with the help command.
+					log.Println("empty field or term detected, this won't do")
+					sendHelp(isMentioned, s, m)
+					// stop trying to process the command
+					return
 				}
-			case "!command":
-				// get the command cards from the archives client
-				commandCards := client.GetCommandCards(field, term)
-				// for each result, send an embedded response message
-				for _, card := range commandCards {
-					response := commands.Command(&card)
-					messageSendEmbed(isMentioned, s, m, &response)
+
+				switch command {
+				case "!help":
+					sendHelp(isMentioned, s, m)
+				case "!keyword":
+					// get the keywords from the archives client
+					keywords := client.GetKeywords(field, term)
+					// for each result, send an embedded response message
+					for _, keyword := range keywords {
+						response := commands.Keyword(&keyword)
+						messageSendEmbed(isMentioned, s, m, &response)
+					}
+				case "!command":
+					// get the command cards from the archives client
+					commandCards := client.GetCommandCards(field, term)
+					// for each result, send an embedded response message
+					for _, card := range commandCards {
+						response := commands.Command(&card)
+						messageSendEmbed(isMentioned, s, m, &response)
+					}
 				}
+
+				//if strings.HasPrefix(m.Content, "!unit") {
+				//	response := commands.Unit(m, lookupUtil)
+				//	messageSendEmbed(s, m, &response)
+				//}
+
+				//if strings.HasPrefix(m.Content, "!upgrade") {
+				//	response := commands.Upgrade(m, lookupUtil)
+				//	messageSendEmbed(s, m, &response)
+				//}
+
+				//if strings.HasPrefix(m.Content, "!command") {
+				//	response := commands.Command(m, lookupUtil)
+				//
+				//	messageSendEmbed(s, m, &response)
+				//}
+
+				//if strings.HasPrefix(m.Content, "!search") {
+				//	searchText := strings.Replace(m.Content, "!search", "", 1)
+				//	searchText = strings.TrimSpace(searchText)
+				//
+				//	if strings.ToLower(searchText) == "sexy rexy" {
+				//		searchText = "clone captain rex"
+				//	}
+				//
+				//	if strings.ToLower(searchText) == "help" {
+				//		outputInfo := output.Info("Search Help", "Find more info on how to structure your search here: http://blevesearch.com/docs/Query-String-Query/")
+				//		messageSendEmbed(s, m, &outputInfo)
+				//	} else {
+				//
+				//		if searchText == "" {
+				//			response := m.Author.Mention() + ", the `!search` command requires a search term. Please try again using this format `!search <search term>`"
+				//			outputError := output.Error("Bad input", response)
+				//			messageSendEmbed(s, m, &outputError)
+				//		} else {
+				//			embeddedResults := searchUtil.FullSearch(searchText)
+				//			for _, embed := range embeddedResults {
+				//				messageSendEmbed(s, m, &embed)
+				//			}
+				//		}
+				//	}
+				//}
 			}
-
-			//if strings.HasPrefix(m.Content, "!unit") {
-			//	response := commands.Unit(m, lookupUtil)
-			//	messageSendEmbed(s, m, &response)
-			//}
-
-			//if strings.HasPrefix(m.Content, "!upgrade") {
-			//	response := commands.Upgrade(m, lookupUtil)
-			//	messageSendEmbed(s, m, &response)
-			//}
-
-			//if strings.HasPrefix(m.Content, "!command") {
-			//	response := commands.Command(m, lookupUtil)
-			//
-			//	messageSendEmbed(s, m, &response)
-			//}
-
-			//if strings.HasPrefix(m.Content, "!search") {
-			//	searchText := strings.Replace(m.Content, "!search", "", 1)
-			//	searchText = strings.TrimSpace(searchText)
-			//
-			//	if strings.ToLower(searchText) == "sexy rexy" {
-			//		searchText = "clone captain rex"
-			//	}
-			//
-			//	if strings.ToLower(searchText) == "help" {
-			//		outputInfo := output.Info("Search Help", "Find more info on how to structure your search here: http://blevesearch.com/docs/Query-String-Query/")
-			//		messageSendEmbed(s, m, &outputInfo)
-			//	} else {
-			//
-			//		if searchText == "" {
-			//			response := m.Author.Mention() + ", the `!search` command requires a search term. Please try again using this format `!search <search term>`"
-			//			outputError := output.Error("Bad input", response)
-			//			messageSendEmbed(s, m, &outputError)
-			//		} else {
-			//			embeddedResults := searchUtil.FullSearch(searchText)
-			//			for _, embed := range embeddedResults {
-			//				messageSendEmbed(s, m, &embed)
-			//			}
-			//		}
-			//	}
-			//}
 		}
 	}
 
