@@ -98,7 +98,7 @@ func NewMessageHandler(client *data.ArchivesClient) interface{} {
 			log.Println(m.Author.Username, ":", command, field, "~", term)
 
 			if isValidCommand(command) {
-				handleCommand(command, isMentioned, s, m, client, field, term)
+				handleCommand(command, field, term, isMentioned, s, m, client)
 			}
 		}
 	}
@@ -106,7 +106,7 @@ func NewMessageHandler(client *data.ArchivesClient) interface{} {
 	return handler
 }
 
-func handleCommand(command string, isMentioned bool, s *discordgo.Session, m *discordgo.MessageCreate, client *data.ArchivesClient, field string, term string) {
+func handleCommand(command string, field string, term string, isMentioned bool, s *discordgo.Session, m *discordgo.MessageCreate, client *data.ArchivesClient) {
 	var responses []discordgo.MessageEmbed
 	processCommand := true
 
