@@ -15,6 +15,7 @@ func Unit(unit *data.Unit) discordgo.MessageEmbed {
 
 	costField := output.Field("Cost", strconv.Itoa(unit.Cost))
 	rankField := output.Field("Rank", unit.Rank)
+	typeField := output.Field("Type", unit.Type)
 	factionField := output.Field("Faction", unit.Faction)
 	uniqueField := output.Field("Unique", strconv.FormatBool(unit.Unique))
 
@@ -22,6 +23,7 @@ func Unit(unit *data.Unit) discordgo.MessageEmbed {
 		fields,
 		&costField,
 		&rankField,
+		&typeField,
 		&factionField,
 		&uniqueField,
 	)

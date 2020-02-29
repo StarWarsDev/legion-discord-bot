@@ -21,4 +21,5 @@ type Unit struct {
 	Entourage    []string      `json:"entourage"`
 	Surge        *Surge        `json:"surge,omitempty"`
 	Weapons      []Weapon      `json:"weapons"`
+	Type         string        `json:"cardSubType" graphql:"cardSubType"`
 }
