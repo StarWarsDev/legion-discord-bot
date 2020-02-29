@@ -12,4 +12,5 @@ type CommandCard struct {
 	Commander    string   `json:"commander"`
 	Orders       string   `json:"orders"`
 	Weapon       *Weapon  `json:"weapon,omitempty"`
+	Text         string   `json:"text,omitempty"`
 }

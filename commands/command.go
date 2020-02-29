@@ -4,8 +4,8 @@ import (
 	"github.com/StarWarsDev/legion-discord-bot/internal/data"
 	"github.com/StarWarsDev/legion-discord-bot/output"
 	"github.com/bwmarrin/discordgo"
-	"log"
 	"strconv"
+	"strings"
 )
 
 // Command handles the !command command
@@ -21,11 +21,36 @@ func Command(card *data.CommandCard) discordgo.MessageEmbed {
 
 	fields = append(fields, &pipsField, &ordersField)
 
-	//if diceCount(&card.Weapon.Dice) > 0 {
-	//	weapon := weaponString(&card.Weapon)
-	//	weaponField := field("Weapon", weapon)
-	//	fields = append(fields, &weaponField)
-	//}
+	if card.Commander != "" {
+		commanderField := output.Field("Commander", card.Commander)
+		fields = append(fields, &commanderField)
+	}
+
+	if card.Faction != "" {
+		factionField := output.Field("Faction", card.Faction)
+		fields = append(fields, &factionField)
+	}
+
+	if len(card.Requirements) > 0 {
+		requirements := strings.Join(card.Requirements, ", ")
+		if requirements != "" {
+			requirementsField := output.Field("Requirements", requirements)
+			fields = append(fields, &requirementsField)
+		}
+	}
+
+	if len(card.Keywords) > 0 {
+		keywords := strings.Join(card.Keywords, ", ")
+		if keywords != "" {
+			keywordsField := output.Field("Keywords", keywords)
+			fields = append(fields, &keywordsField)
+		}
+	}
+
+	if card.Weapon != nil {
+		weaponField := output.Field("Weapon", card.Weapon.String())
+		fields = append(fields, &weaponField)
+	}
 
 	response := discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{
@@ -39,7 +64,9 @@ func Command(card *data.CommandCard) discordgo.MessageEmbed {
 		},
 	}
 
-	log.Println(response)
+	if card.Text != "" {
+		response.Description = card.Text
+	}
 
 	return response
 }
