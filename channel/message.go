@@ -3,10 +3,11 @@ package channel
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/StarWarsDev/legion-discord-bot/commands"
 	"log"
 	"strconv"
 	"strings"
+
+	"github.com/StarWarsDev/legion-discord-bot/commands"
 
 	"github.com/StarWarsDev/legion-discord-bot/internal/data"
 	"github.com/StarWarsDev/legion-discord-bot/output"
@@ -134,6 +135,13 @@ func handleCommand(command string, field string, term string, isMentioned bool, 
 			// for each result, send an embedded response message
 			for _, card := range commandCards {
 				responses = append(responses, commands.Command(&card))
+			}
+		case "!unit":
+			// get the unit cards from the archives
+			units := client.GetUnits(field, term)
+			// for each result, send an embedded response message
+			for _, unit := range units {
+				responses = append(responses, commands.Unit(&unit))
 			}
 		}
 	}

@@ -39,6 +39,17 @@ type Surge struct {
 	Defense string `json:"defense,omitempty"`
 }
 
+func (surge *Surge) String() string {
+	strs := []string{}
+	if surge.Attack != "" {
+		strs = append(strs, "Attack: "+surge.Attack)
+	}
+	if surge.Defense != "" {
+		strs = append(strs, "Defense: "+surge.Defense)
+	}
+	return strings.Join(strs, ", ")
+}
+
 type Weapon struct {
 	Name     string   `json:"name,omitempty"`
 	Range    Range    `json:"range"`
@@ -61,6 +72,9 @@ func (weapon *Weapon) String() string {
 	}
 	weaponInfo = append(weaponInfo, fmt.Sprintf("Range: %d - %v", weapon.Range.From, to))
 	weaponInfo = append(weaponInfo, fmt.Sprintf("Dice: %s", weapon.Dice.String()))
+	if weapon.Surge != nil {
+		weaponInfo = append(weaponInfo, fmt.Sprintf("Surge: %s", weapon.Surge.String()))
+	}
 
 	if len(weapon.Keywords) > 0 {
 		keywords := strings.Join(weapon.Keywords, ", ")

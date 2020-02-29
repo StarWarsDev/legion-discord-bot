@@ -53,6 +53,25 @@ func (client *ArchivesClient) GetCommandCards(field, term string) []CommandCard 
 	return query.Commands
 }
 
+// GetUnits gets the unit cards from the archives
+func (client *ArchivesClient) GetUnits(field, term string) []Unit {
+	var query struct {
+		Units []Unit `graphql:"units(query: $query)"`
+	}
+
+	variables := map[string]interface{}{
+		"query": graphql.String(fmt.Sprintf("%s:%s", field, term)),
+	}
+
+	err := client.gqlClient.Query(context.Background(), &query, variables)
+	if err != nil {
+		j, _ := json.Marshal(&query)
+		log.Println(err, string(j), variables)
+	}
+
+	return query.Units
+}
+
 // NewArchivesClient creates and returns a new ArchivesClient
 func NewArchivesClient(url string) ArchivesClient {
 	gqlClient := graphql.NewClient(url, nil)
