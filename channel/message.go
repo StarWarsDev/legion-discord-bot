@@ -98,81 +98,91 @@ func NewMessageHandler(client *data.ArchivesClient) interface{} {
 			log.Println(m.Author.Username, ":", command, field, "~", term)
 
 			if isValidCommand(command) {
-				if command != "!help" && (field == "" || term == "(?i)()") {
-					// this is an invalid command execution, respond with the help command.
-					log.Println("empty field or term detected, this won't do")
-					sendHelp(isMentioned, s, m)
-					// stop trying to process the command
-					return
-				}
-
-				switch command {
-				case "!help":
-					sendHelp(isMentioned, s, m)
-				case "!keyword":
-					// get the keywords from the archives client
-					keywords := client.GetKeywords(field, term)
-					// for each result, send an embedded response message
-					for _, keyword := range keywords {
-						response := commands.Keyword(&keyword)
-						messageSendEmbed(isMentioned, s, m, &response)
-					}
-				case "!command":
-					// get the command cards from the archives client
-					commandCards := client.GetCommandCards(field, term)
-					// for each result, send an embedded response message
-					for _, card := range commandCards {
-						response := commands.Command(&card)
-						messageSendEmbed(isMentioned, s, m, &response)
-					}
-				}
-
-				//if strings.HasPrefix(m.Content, "!unit") {
-				//	response := commands.Unit(m, lookupUtil)
-				//	messageSendEmbed(s, m, &response)
-				//}
-
-				//if strings.HasPrefix(m.Content, "!upgrade") {
-				//	response := commands.Upgrade(m, lookupUtil)
-				//	messageSendEmbed(s, m, &response)
-				//}
-
-				//if strings.HasPrefix(m.Content, "!command") {
-				//	response := commands.Command(m, lookupUtil)
-				//
-				//	messageSendEmbed(s, m, &response)
-				//}
-
-				//if strings.HasPrefix(m.Content, "!search") {
-				//	searchText := strings.Replace(m.Content, "!search", "", 1)
-				//	searchText = strings.TrimSpace(searchText)
-				//
-				//	if strings.ToLower(searchText) == "sexy rexy" {
-				//		searchText = "clone captain rex"
-				//	}
-				//
-				//	if strings.ToLower(searchText) == "help" {
-				//		outputInfo := output.Info("Search Help", "Find more info on how to structure your search here: http://blevesearch.com/docs/Query-String-Query/")
-				//		messageSendEmbed(s, m, &outputInfo)
-				//	} else {
-				//
-				//		if searchText == "" {
-				//			response := m.Author.Mention() + ", the `!search` command requires a search term. Please try again using this format `!search <search term>`"
-				//			outputError := output.Error("Bad input", response)
-				//			messageSendEmbed(s, m, &outputError)
-				//		} else {
-				//			embeddedResults := searchUtil.FullSearch(searchText)
-				//			for _, embed := range embeddedResults {
-				//				messageSendEmbed(s, m, &embed)
-				//			}
-				//		}
-				//	}
-				//}
+				handleCommand(command, isMentioned, s, m, client, field, term)
 			}
 		}
 	}
 
 	return handler
+}
+
+func handleCommand(command string, isMentioned bool, s *discordgo.Session, m *discordgo.MessageCreate, client *data.ArchivesClient, field string, term string) {
+	var responses []discordgo.MessageEmbed
+	processCommand := true
+
+	if command != "!help" && (field == "" || term == "(?i)()") {
+		// this is an invalid command execution, respond with the help command.
+		log.Println("empty field or term detected, this won't do")
+		responses = append(responses, commands.Help())
+		processCommand = false
+	}
+
+	if processCommand {
+		switch command {
+		case "!help":
+			responses = append(responses, commands.Help())
+		case "!keyword":
+			// get the keywords from the archives client
+			keywords := client.GetKeywords(field, term)
+			// for each result, send an embedded response message
+			for _, keyword := range keywords {
+				responses = append(responses, commands.Keyword(&keyword))
+			}
+		case "!command":
+			// get the command cards from the archives client
+			commandCards := client.GetCommandCards(field, term)
+			// for each result, send an embedded response message
+			for _, card := range commandCards {
+				responses = append(responses, commands.Command(&card))
+			}
+		}
+	}
+
+	for _, response := range responses {
+		messageSendEmbed(isMentioned, s, m, &response)
+	}
+
+	//if strings.HasPrefix(m.Content, "!unit") {
+	//	response := commands.Unit(m, lookupUtil)
+	//	messageSendEmbed(s, m, &response)
+	//}
+
+	//if strings.HasPrefix(m.Content, "!upgrade") {
+	//	response := commands.Upgrade(m, lookupUtil)
+	//	messageSendEmbed(s, m, &response)
+	//}
+
+	//if strings.HasPrefix(m.Content, "!command") {
+	//	response := commands.Command(m, lookupUtil)
+	//
+	//	messageSendEmbed(s, m, &response)
+	//}
+
+	//if strings.HasPrefix(m.Content, "!search") {
+	//	searchText := strings.Replace(m.Content, "!search", "", 1)
+	//	searchText = strings.TrimSpace(searchText)
+	//
+	//	if strings.ToLower(searchText) == "sexy rexy" {
+	//		searchText = "clone captain rex"
+	//	}
+	//
+	//	if strings.ToLower(searchText) == "help" {
+	//		outputInfo := output.Info("Search Help", "Find more info on how to structure your search here: http://blevesearch.com/docs/Query-String-Query/")
+	//		messageSendEmbed(s, m, &outputInfo)
+	//	} else {
+	//
+	//		if searchText == "" {
+	//			response := m.Author.Mention() + ", the `!search` command requires a search term. Please try again using this format `!search <search term>`"
+	//			outputError := output.Error("Bad input", response)
+	//			messageSendEmbed(s, m, &outputError)
+	//		} else {
+	//			embeddedResults := searchUtil.FullSearch(searchText)
+	//			for _, embed := range embeddedResults {
+	//				messageSendEmbed(s, m, &embed)
+	//			}
+	//		}
+	//	}
+	//}
 }
 
 func parseCommandFieldAndTerm(content string) (string, string, string) {
@@ -209,9 +219,4 @@ func parseCommandFieldAndTerm(content string) (string, string, string) {
 		}
 	}
 	return command, field, term
-}
-
-func sendHelp(dm bool, s *discordgo.Session, m *discordgo.MessageCreate) {
-	helpContent := commands.Help()
-	messageSendEmbed(dm, s, m, &helpContent)
 }
