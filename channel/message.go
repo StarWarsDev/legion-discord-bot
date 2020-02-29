@@ -151,38 +151,6 @@ func handleCommand(command string, isMentioned bool, s *discordgo.Session, m *di
 	//	response := commands.Upgrade(m, lookupUtil)
 	//	messageSendEmbed(s, m, &response)
 	//}
-
-	//if strings.HasPrefix(m.Content, "!command") {
-	//	response := commands.Command(m, lookupUtil)
-	//
-	//	messageSendEmbed(s, m, &response)
-	//}
-
-	//if strings.HasPrefix(m.Content, "!search") {
-	//	searchText := strings.Replace(m.Content, "!search", "", 1)
-	//	searchText = strings.TrimSpace(searchText)
-	//
-	//	if strings.ToLower(searchText) == "sexy rexy" {
-	//		searchText = "clone captain rex"
-	//	}
-	//
-	//	if strings.ToLower(searchText) == "help" {
-	//		outputInfo := output.Info("Search Help", "Find more info on how to structure your search here: http://blevesearch.com/docs/Query-String-Query/")
-	//		messageSendEmbed(s, m, &outputInfo)
-	//	} else {
-	//
-	//		if searchText == "" {
-	//			response := m.Author.Mention() + ", the `!search` command requires a search term. Please try again using this format `!search <search term>`"
-	//			outputError := output.Error("Bad input", response)
-	//			messageSendEmbed(s, m, &outputError)
-	//		} else {
-	//			embeddedResults := searchUtil.FullSearch(searchText)
-	//			for _, embed := range embeddedResults {
-	//				messageSendEmbed(s, m, &embed)
-	//			}
-	//		}
-	//	}
-	//}
 }
 
 func parseCommandFieldAndTerm(content string) (string, string, string) {
