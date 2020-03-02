@@ -2,23 +2,24 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"github.com/StarWarsDev/legion-discord-bot/channel"
-	"github.com/StarWarsDev/legion-discord-bot/data"
-	"github.com/StarWarsDev/legion-discord-bot/lookup"
-	"github.com/StarWarsDev/legion-discord-bot/search"
-	"github.com/bwmarrin/discordgo"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/StarWarsDev/legion-discord-bot/internal/channel"
+	"github.com/StarWarsDev/legion-discord-bot/internal/data"
+	"github.com/bwmarrin/discordgo"
 )
 
 func main() {
-	fmt.Println("Hello, World! I am the Discord Legion bot!")
+	log.Println("Hello, World! I am the Discord Legion bot!")
 
 	// init all the data
 	var token string
+	var archivesURL string
 	flag.StringVar(&token, "t", "", "Bot Token")
+	flag.StringVar(&archivesURL, "url", "https://sw-legion-archives.herokuapp.com/graphql", "Archives GraphQL URL")
 	flag.Parse()
 
 	if token == "" {
@@ -31,13 +32,6 @@ func main() {
 		panic("No discord token provided! Try passing it with the '-t' flag or setting 'DISCORD_TOKEN' in the environment.")
 	}
 
-	// get the legion-data version from the environment
-	legionDataVersion := os.Getenv("LEGION_DATA_VERSION")
-
-	legionData := data.LoadLegionData()
-	lookupUtil := lookup.NewUtil(&legionData)
-	searchUtil := search.NewUtil(&legionData, &lookupUtil)
-
 	// create a new connection to Discord
 	discord, err := discordgo.New("Bot " + token)
 
@@ -45,8 +39,11 @@ func main() {
 		panic(err)
 	}
 
+	// create the graphql client
+	client := data.NewArchivesClient(archivesURL)
+
 	// create and add the message handler
-	discord.AddHandler(channel.NewMessageHandler(&lookupUtil, &searchUtil))
+	discord.AddHandler(channel.NewMessageHandler(&client))
 
 	// open the connection to Discord
 	err = discord.Open()
@@ -54,22 +51,15 @@ func main() {
 		panic(err)
 	}
 
-	if legionDataVersion != "" {
-		versionMessage := fmt.Sprintf("legion-data version %s", legionDataVersion)
-		fmt.Println(versionMessage)
-		err = discord.UpdateStatus(0, versionMessage)
-		if err != nil {
-			panic(err)
-		}
-	}
+	// set the bot status
+	_ = discord.UpdateStatus(0, "Type !help to start")
 
 	// Wait here until CTRL-C or other term signal is received.
-	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
+	log.Println("Bot is now running.  Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 
 	// Cleanly close down the Discord session.
 	_ = discord.Close()
-	_ = os.RemoveAll(search.IndexKey)
 }
