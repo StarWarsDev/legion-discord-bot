@@ -143,17 +143,19 @@ func handleCommand(command string, field string, term string, isMentioned bool, 
 			for _, unit := range units {
 				responses = append(responses, commands.Unit(&unit))
 			}
+		case "!upgrade":
+			// get the upgrade cards from the archives
+			upgrades := client.GetUpgrades(field, term)
+			// for each result, send an embedded response message
+			for _, upgrade := range upgrades {
+				responses = append(responses, commands.Upgrade(&upgrade))
+			}
 		}
 	}
 
 	for _, response := range responses {
 		messageSendEmbed(isMentioned, s, m, &response)
 	}
-
-	//if strings.HasPrefix(m.Content, "!unit") {
-	//	response := commands.Unit(m, lookupUtil)
-	//	messageSendEmbed(s, m, &response)
-	//}
 
 	//if strings.HasPrefix(m.Content, "!upgrade") {
 	//	response := commands.Upgrade(m, lookupUtil)

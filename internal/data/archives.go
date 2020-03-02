@@ -72,6 +72,25 @@ func (client *ArchivesClient) GetUnits(field, term string) []Unit {
 	return query.Units
 }
 
+// GetUpgrades get the upgrade cards from the archives
+func (client *ArchivesClient) GetUpgrades(field, term string) []Upgrade {
+	var query struct {
+		Upgrades []Upgrade `graphql:"upgrades(query: $query)"`
+	}
+
+	variables := map[string]interface{}{
+		"query": graphql.String(fmt.Sprintf("%s:%s", field, term)),
+	}
+
+	err := client.gqlClient.Query(context.Background(), &query, variables)
+	if err != nil {
+		j, _ := json.Marshal(&query)
+		log.Println(err, string(j), variables)
+	}
+
+	return query.Upgrades
+}
+
 // NewArchivesClient creates and returns a new ArchivesClient
 func NewArchivesClient(url string) ArchivesClient {
 	gqlClient := graphql.NewClient(url, nil)

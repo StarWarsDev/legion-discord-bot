@@ -3,11 +3,22 @@ package utils
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"regexp"
 	"strings"
 
 	"github.com/StarWarsDev/legion-discord-bot/data"
 )
+
+func FixURL(urlInput string) string {
+	urlOut, err := url.Parse(urlInput)
+	if err != nil {
+		log.Println(err)
+		return urlInput
+	}
+
+	return urlOut.String()
+}
 
 func WithTemplate(tmpl string, digits ...interface{}) (out string) {
 	out = fmt.Sprintf(tmpl, digits...)
