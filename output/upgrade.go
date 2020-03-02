@@ -12,11 +12,6 @@ import (
 func Upgrade(upgrade *data.Upgrade) discordgo.MessageEmbed {
 	var fields []*discordgo.MessageEmbedField
 
-	if upgrade.Text != "" {
-		textField := Field("Text", upgrade.Text)
-		fields = append(fields, &textField)
-	}
-
 	costField := Field("Cost", strconv.Itoa(upgrade.Cost))
 	typeField := Field("Type", upgrade.Type)
 	exhaustField := Field("Exhaust", strconv.FormatBool(upgrade.Exhaust))
@@ -51,9 +46,10 @@ func Upgrade(upgrade *data.Upgrade) discordgo.MessageEmbed {
 		Author: &discordgo.MessageEmbedAuthor{
 			Name: "Upgrade",
 		},
-		Fields: fields,
-		Color:  0x609c30,
-		Title:  upgrade.Name,
+		Fields:      fields,
+		Color:       0x609c30,
+		Title:       upgrade.Name,
+		Description: upgrade.Text,
 		Image: &discordgo.MessageEmbedImage{
 			URL: utils.FixURL(upgrade.Image),
 		},
