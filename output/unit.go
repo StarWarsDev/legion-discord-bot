@@ -1,11 +1,10 @@
-package commands
+package output
 
 import (
 	"strconv"
 	"strings"
 
 	"github.com/StarWarsDev/legion-discord-bot/internal/data"
-	"github.com/StarWarsDev/legion-discord-bot/output"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -13,11 +12,11 @@ import (
 func Unit(unit *data.Unit) discordgo.MessageEmbed {
 	var fields []*discordgo.MessageEmbedField
 
-	costField := output.Field("Cost", strconv.Itoa(unit.Cost))
-	rankField := output.Field("Rank", unit.Rank)
-	typeField := output.Field("Type", unit.Type)
-	factionField := output.Field("Faction", unit.Faction)
-	uniqueField := output.Field("Unique", strconv.FormatBool(unit.Unique))
+	costField := Field("Cost", strconv.Itoa(unit.Cost))
+	rankField := Field("Rank", unit.Rank)
+	typeField := Field("Type", unit.Type)
+	factionField := Field("Faction", unit.Faction)
+	uniqueField := Field("Unique", strconv.FormatBool(unit.Unique))
 
 	fields = append(
 		fields,
@@ -29,12 +28,12 @@ func Unit(unit *data.Unit) discordgo.MessageEmbed {
 	)
 
 	if unit.Wounds > 0 {
-		woundsField := output.Field("Wounds", strconv.Itoa(unit.Wounds))
+		woundsField := Field("Wounds", strconv.Itoa(unit.Wounds))
 		fields = append(fields, &woundsField)
 	}
 
 	if unit.Courage != nil {
-		courageField := output.Field("Courage", strconv.Itoa(*unit.Courage))
+		courageField := Field("Courage", strconv.Itoa(*unit.Courage))
 		if *unit.Courage < 1 {
 			courageField.Value = "-"
 		}
@@ -42,7 +41,7 @@ func Unit(unit *data.Unit) discordgo.MessageEmbed {
 	}
 
 	if unit.Resilience != nil {
-		resilienceField := output.Field("Resilience", strconv.Itoa(*unit.Resilience))
+		resilienceField := Field("Resilience", strconv.Itoa(*unit.Resilience))
 		if *unit.Resilience < 1 {
 			resilienceField.Value = "-"
 		}
@@ -50,27 +49,27 @@ func Unit(unit *data.Unit) discordgo.MessageEmbed {
 	}
 
 	if unit.Defense != "" {
-		defenseField := output.Field("Defense", unit.Defense)
+		defenseField := Field("Defense", unit.Defense)
 		fields = append(fields, &defenseField)
 	}
 
 	if len(unit.Requirements) > 0 {
-		requirementsField := output.Field("Requirements", strings.Join(unit.Requirements, ", "))
+		requirementsField := Field("Requirements", strings.Join(unit.Requirements, ", "))
 		fields = append(fields, &requirementsField)
 	}
 
 	if len(unit.Keywords) > 0 {
-		keywordsField := output.Field("Keywords", strings.Join(unit.Keywords, ", "))
+		keywordsField := Field("Keywords", strings.Join(unit.Keywords, ", "))
 		fields = append(fields, &keywordsField)
 	}
 
 	if len(unit.Entourage) > 0 {
-		entourageField := output.Field("Entourage", strings.Join(unit.Entourage, ", "))
+		entourageField := Field("Entourage", strings.Join(unit.Entourage, ", "))
 		fields = append(fields, &entourageField)
 	}
 
 	if unit.Surge != nil && unit.Surge.String() != "" {
-		surgeField := output.Field("Surge", unit.Surge.String())
+		surgeField := Field("Surge", unit.Surge.String())
 		fields = append(fields, &surgeField)
 	}
 
@@ -79,12 +78,12 @@ func Unit(unit *data.Unit) discordgo.MessageEmbed {
 		for _, weapon := range unit.Weapons {
 			weapons = append(weapons, weapon.String())
 		}
-		weaponsField := output.Field("Weapons", strings.Join(weapons, "\n\n"))
+		weaponsField := Field("Weapons", strings.Join(weapons, "\n\n"))
 		fields = append(fields, &weaponsField)
 	}
 
 	if len(unit.Slots) > 0 {
-		slotsField := output.Field("Slots", strings.Join(unit.Slots, ", "))
+		slotsField := Field("Slots", strings.Join(unit.Slots, ", "))
 		fields = append(fields, &slotsField)
 	}
 
@@ -93,7 +92,7 @@ func Unit(unit *data.Unit) discordgo.MessageEmbed {
 		for _, commandCard := range unit.CommandCards {
 			names = append(names, commandCard.Name)
 		}
-		commandCardsField := output.Field("Command Cards", strings.Join(names, ", "))
+		commandCardsField := Field("Command Cards", strings.Join(names, ", "))
 		fields = append(fields, &commandCardsField)
 	}
 

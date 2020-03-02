@@ -1,4 +1,4 @@
-package commands
+package output
 
 import (
 	"github.com/StarWarsDev/legion-discord-bot/internal/data"

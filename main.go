@@ -9,7 +9,6 @@ import (
 
 	"github.com/StarWarsDev/legion-discord-bot/channel"
 	"github.com/StarWarsDev/legion-discord-bot/internal/data"
-	"github.com/StarWarsDev/legion-discord-bot/search"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -60,5 +59,4 @@ func main() {
 
 	// Cleanly close down the Discord session.
 	_ = discord.Close()
-	_ = os.RemoveAll(search.IndexKey)
 }

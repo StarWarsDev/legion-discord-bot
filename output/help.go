@@ -1,7 +1,6 @@
-package commands
+package output
 
 import (
-	"github.com/StarWarsDev/legion-discord-bot/output"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -29,10 +28,10 @@ func Help() discordgo.MessageEmbed {
 			Value: "This help message",
 		},
 	}
-	info := output.Info("Help", `**Usage:**
+	info := Info("Help", `**Usage:**
 `+"`!COMMAND [FIELD_NAME ~] SEARCH_TERM`"+`
 
-`+"`COMMAND` can be any of the available commands below"+`
+`+"`COMMAND` can be any of the available embed below"+`
 `+"`FIELD_NAME`"+` is optional and defaults to "name" and can be any top level field on the item being queried.
 `+"`SEARCH_TERM`"+` is treated as a regular expression. All terms are considered _case insensitive_.
 

@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/StarWarsDev/legion-discord-bot/commands"
-
 	"github.com/StarWarsDev/legion-discord-bot/internal/data"
 	"github.com/StarWarsDev/legion-discord-bot/output"
 	"github.com/bwmarrin/discordgo"
@@ -114,41 +112,41 @@ func handleCommand(command string, field string, term string, isMentioned bool, 
 	if command != "!help" && (field == "" || term == "(?i)()") {
 		// this is an invalid command execution, respond with the help command.
 		log.Println("empty field or term detected, this won't do")
-		responses = append(responses, commands.Help())
+		responses = append(responses, output.Help())
 		processCommand = false
 	}
 
 	if processCommand {
 		switch command {
 		case "!help":
-			responses = append(responses, commands.Help())
+			responses = append(responses, output.Help())
 		case "!keyword":
 			// get the keywords from the archives client
 			keywords := client.GetKeywords(field, term)
 			// for each result, send an embedded response message
 			for _, keyword := range keywords {
-				responses = append(responses, commands.Keyword(&keyword))
+				responses = append(responses, output.Keyword(&keyword))
 			}
 		case "!command":
 			// get the command cards from the archives client
 			commandCards := client.GetCommandCards(field, term)
 			// for each result, send an embedded response message
 			for _, card := range commandCards {
-				responses = append(responses, commands.Command(&card))
+				responses = append(responses, output.Command(&card))
 			}
 		case "!unit":
 			// get the unit cards from the archives
 			units := client.GetUnits(field, term)
 			// for each result, send an embedded response message
 			for _, unit := range units {
-				responses = append(responses, commands.Unit(&unit))
+				responses = append(responses, output.Unit(&unit))
 			}
 		case "!upgrade":
 			// get the upgrade cards from the archives
 			upgrades := client.GetUpgrades(field, term)
 			// for each result, send an embedded response message
 			for _, upgrade := range upgrades {
-				responses = append(responses, commands.Upgrade(&upgrade))
+				responses = append(responses, output.Upgrade(&upgrade))
 			}
 		}
 	}
@@ -156,11 +154,6 @@ func handleCommand(command string, field string, term string, isMentioned bool, 
 	for _, response := range responses {
 		messageSendEmbed(isMentioned, s, m, &response)
 	}
-
-	//if strings.HasPrefix(m.Content, "!upgrade") {
-	//	response := commands.Upgrade(m, lookupUtil)
-	//	messageSendEmbed(s, m, &response)
-	//}
 }
 
 func parseCommandFieldAndTerm(content string) (string, string, string) {

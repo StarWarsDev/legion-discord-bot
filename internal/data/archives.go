@@ -37,7 +37,7 @@ func (client *ArchivesClient) GetKeywords(field, term string) []Keyword {
 // GetCommandCards get the command cards from the archives
 func (client *ArchivesClient) GetCommandCards(field, term string) []CommandCard {
 	var query struct {
-		Commands []CommandCard `graphql:"commands(query: $query)"`
+		Commands []CommandCard `graphql:"embed(query: $query)"`
 	}
 
 	variables := map[string]interface{}{
