@@ -151,6 +151,12 @@ func handleCommand(command string, field string, term string, isMentioned bool, 
 		}
 	}
 
+	infoResponse := output.Info(
+		fmt.Sprintf("Showing %d Results", len(responses)),
+		fmt.Sprintf("Found %d results for `%s %s ~ %s`", len(responses), command, field, term),
+	)
+	responses = append(responses, infoResponse)
+
 	for _, response := range responses {
 		messageSendEmbed(isMentioned, s, m, &response)
 	}
@@ -183,9 +189,22 @@ func parseCommandFieldAndTerm(content string) (string, string, string) {
 		term = strings.TrimSpace(term)
 
 		// determine if the term should be a regex
+		canBeRegExp := true
 		_, err := strconv.Atoi(term)
-		if err != nil {
-			// if the term could not be converted to an int then treat is as a regex string
+		if err == nil {
+			// the value can be an int, don't treat as a regex
+			canBeRegExp = false
+		}
+
+		// is the term a boolean?
+		_, err = strconv.ParseBool(term)
+		if err == nil {
+			// the value parses as a boolean, don't treat it as a regular expression
+			canBeRegExp = false
+		}
+
+		if canBeRegExp {
+			// The term can be a regular expression
 			term = fmt.Sprintf("(?i)(%s)", term)
 		}
 	}
