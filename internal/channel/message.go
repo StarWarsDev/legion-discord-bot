@@ -151,11 +151,13 @@ func handleCommand(command string, field string, term string, isMentioned bool, 
 		}
 	}
 
-	infoResponse := output.Info(
-		fmt.Sprintf("Showing %d Results", len(responses)),
-		fmt.Sprintf("Found %d results for `%s %s ~ %s`", len(responses), command, field, term),
-	)
-	responses = append(responses, infoResponse)
+	if command != "!help" {
+		infoResponse := output.Info(
+			fmt.Sprintf("Showing %d Results", len(responses)),
+			fmt.Sprintf("Found %d results for `%s %s ~ %s`", len(responses), command, field, term),
+		)
+		responses = append(responses, infoResponse)
+	}
 
 	for _, response := range responses {
 		messageSendEmbed(isMentioned, s, m, &response)
