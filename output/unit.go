@@ -102,7 +102,7 @@ func Unit(unit *data.Unit) discordgo.MessageEmbed {
 			Name: "Unit",
 		},
 		Color:  0xffffff,
-		Title:  unit.Name,
+		Title:  unit.FullName(),
 		Fields: fields,
 		Image: &discordgo.MessageEmbedImage{
 			URL: utils.FixURL(unit.Image),

@@ -48,7 +48,7 @@ func Upgrade(upgrade *data.Upgrade) discordgo.MessageEmbed {
 		},
 		Fields:      fields,
 		Color:       0x609c30,
-		Title:       upgrade.Name,
+		Title:       upgrade.FullName(),
 		Description: upgrade.Text,
 		Image: &discordgo.MessageEmbedImage{
 			URL: utils.FixURL(upgrade.Image),

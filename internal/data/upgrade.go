@@ -11,4 +11,13 @@ type Upgrade struct {
 	Exhaust            bool     `json:"exhaust"`
 	Weapon             *Weapon  `json:"weapon"`
 	UnitTypeExclusions []string `json:"unitTypeExclusions"`
+	Unique             bool     `json:"unique"`
+}
+
+func (upgrade *Upgrade) FullName() string {
+	name := upgrade.Name
+	if upgrade.Unique {
+		name = "• " + name
+	}
+	return name
 }

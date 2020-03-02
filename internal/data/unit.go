@@ -21,3 +21,11 @@ type Unit struct {
 	Weapons      []Weapon      `json:"weapons"`
 	Type         string        `json:"cardSubType" graphql:"cardSubType"`
 }
+
+func (unit *Unit) FullName() string {
+	name := unit.Name
+	if unit.Unique {
+		name = "• " + name
+	}
+	return name
+}
