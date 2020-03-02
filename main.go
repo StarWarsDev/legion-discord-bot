@@ -51,6 +51,9 @@ func main() {
 		panic(err)
 	}
 
+	// set the bot status
+	_ = discord.UpdateStatus(0, "Type !help to start")
+
 	// Wait here until CTRL-C or other term signal is received.
 	log.Println("Bot is now running.  Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
