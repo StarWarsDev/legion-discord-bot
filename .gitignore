@@ -94,3 +94,4 @@ fabric.properties
 yarn.lock
 .DS_Store
 node_modules
+.env
