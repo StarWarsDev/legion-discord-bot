@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/StarWarsDev/legion-discord-bot/internal/data"
-	"github.com/StarWarsDev/legion-discord-bot/output"
+	"github.com/StarWarsDev/legion-discord-bot/internal/output"
 	"github.com/bwmarrin/discordgo"
 )
 

@@ -2,7 +2,7 @@ package output
 
 import (
 	"github.com/StarWarsDev/legion-discord-bot/internal/data"
-	"github.com/StarWarsDev/legion-discord-bot/utils"
+	"github.com/StarWarsDev/legion-discord-bot/internal/utils"
 	"github.com/bwmarrin/discordgo"
 	"strconv"
 	"strings"

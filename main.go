@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/StarWarsDev/legion-discord-bot/channel"
+	"github.com/StarWarsDev/legion-discord-bot/internal/channel"
 	"github.com/StarWarsDev/legion-discord-bot/internal/data"
 	"github.com/bwmarrin/discordgo"
 )
