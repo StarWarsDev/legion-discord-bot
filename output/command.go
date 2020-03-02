@@ -2,6 +2,7 @@ package output
 
 import (
 	"github.com/StarWarsDev/legion-discord-bot/internal/data"
+	"github.com/StarWarsDev/legion-discord-bot/utils"
 	"github.com/bwmarrin/discordgo"
 	"strconv"
 	"strings"
@@ -59,7 +60,7 @@ func Command(card *data.CommandCard) discordgo.MessageEmbed {
 		Title:  card.Name,
 		Fields: fields,
 		Image: &discordgo.MessageEmbedImage{
-			URL: card.Image,
+			URL: utils.FixURL(card.Image),
 		},
 	}
 

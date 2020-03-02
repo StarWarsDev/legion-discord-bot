@@ -1,6 +1,7 @@
 package output
 
 import (
+	"github.com/StarWarsDev/legion-discord-bot/utils"
 	"strconv"
 	"strings"
 
@@ -104,7 +105,7 @@ func Unit(unit *data.Unit) discordgo.MessageEmbed {
 		Title:  unit.Name,
 		Fields: fields,
 		Image: &discordgo.MessageEmbedImage{
-			URL: unit.Image,
+			URL: utils.FixURL(unit.Image),
 		},
 	}
 
