@@ -188,27 +188,113 @@ func parseCommandFieldAndTerm(content string) (string, string, string) {
 
 		// clean up the term and field, just in case
 		field = strings.ToLower(strings.TrimSpace(field))
-		term = strings.TrimSpace(term)
-
-		// determine if the term should be a regex
-		canBeRegExp := true
-		_, err := strconv.Atoi(term)
-		if err == nil {
-			// the value can be an int, don't treat as a regex
-			canBeRegExp = false
-		}
-
-		// is the term a boolean?
-		_, err = strconv.ParseBool(term)
-		if err == nil {
-			// the value parses as a boolean, don't treat it as a regular expression
-			canBeRegExp = false
-		}
-
-		if canBeRegExp {
-			// The term can be a regular expression
-			term = fmt.Sprintf("(?i)(%s)", term)
-		}
+		term = ParseTerm(term)
 	}
 	return command, field, term
+}
+
+func ParseTerm(term string) string {
+	term = strings.TrimSpace(term)
+	canBeRegExp := true
+
+	if _, err := strconv.Atoi(term); err == nil {
+		canBeRegExp = false
+	}
+
+	if canBeRegExp {
+		term = fmt.Sprintf("(?i)(%s)", term)
+	}
+
+	return term
+}
+
+func HandleSlashCommand(command string, field string, term string, s *discordgo.Session, i *discordgo.InteractionCreate, client *data.ArchivesClient, inMemClient *data.InMemoryClient) {
+	//term = ParseTerm(term)
+	var responses []*discordgo.MessageEmbed
+	processCommand := true
+
+	if processCommand {
+		// wrap the term in regexp if not searching for command pips
+		if command != "command" && field != "pips" {
+			term = fmt.Sprintf("(?i)(%s)", term)
+		}
+		switch command {
+		case "keyword":
+			// get the keywords from the archives client
+			keywords, err := inMemClient.GetKeywords(term)
+			if err != nil {
+				log.Printf("there was an error getting keyword data for: [%s]: %v", term, err)
+			}
+			// for each result, send an embedded response message
+			for _, keyword := range keywords {
+				response := output.Keyword(&keyword)
+				responses = append(responses, &response)
+			}
+		case "command":
+			// get the command cards from the archives client
+			commandCards, _ := inMemClient.CommandCards(field, term)
+			// for each result, send an embedded response message
+			for _, card := range commandCards {
+				response := output.Command(&card)
+				responses = append(responses, &response)
+			}
+		case "unit":
+			// get the unit cards from the archives
+			units, _ := inMemClient.UnitCards(field, term)
+			// for each result, send an embedded response message
+			for _, unit := range units {
+				response := output.Unit(&unit)
+				responses = append(responses, &response)
+			}
+		case "upgrade":
+			// get the upgrade cards from the archives
+			upgrades, _ := inMemClient.UpgradeCards(field, term)
+			// for each result, send an embedded response message
+			for _, upgrade := range upgrades {
+				response := output.Upgrade(&upgrade)
+				responses = append(responses, &response)
+			}
+		}
+	}
+
+	infoResponse := output.Info(
+		fmt.Sprintf("Showing %d Results", len(responses)),
+		fmt.Sprintf("Found %d results for `%s %s ~ %s`", len(responses), command, field, term),
+	)
+	responses = append(responses, &infoResponse)
+
+	interactionSendEmbed(s, i, responses)
+}
+
+func interactionSendEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, embeds []*discordgo.MessageEmbed) {
+	// channelID := i.ChannelID
+
+	log.Println("sending response back to discord")
+
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Embeds: embeds,
+		},
+	})
+
+	// _, err := s.ChannelMessageSendEmbed(channelID, embed)
+	if err != nil {
+		log.Println(err)
+		log.Println("Embedded item as follows")
+		for _, embed := range embeds {
+			log.Printf("%d Fields\n", len(embed.Fields))
+
+			b, err := json.Marshal(embed)
+			if err != nil {
+				log.Println("Could not unmarshal data")
+				log.Println(err)
+			}
+
+			log.Println(string(b))
+		}
+		// title := "Failed to render"
+		// description := fmt.Sprintf("There was a problem rendering the %s \"%s\"", embed.Author.Name, embed.Title)
+		// errorMessageSendEmbed(title, description, dm, s, m)
+	}
 }

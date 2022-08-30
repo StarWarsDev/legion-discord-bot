@@ -24,7 +24,7 @@ test:
 	CGO_ENABLED=0 go test ./...
 
 up:
-	docker-compose up --build
+	docker compose up --build
 
 docker:
 	$(DOCKERBUILD) -t $(DOCKER_IMAGE_NAME):$(VERSION) . && \
