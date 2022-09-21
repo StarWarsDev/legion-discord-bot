@@ -34,12 +34,14 @@ jobs:
       - name: Build and push latest
         uses: docker/build-push-action@v3
         with:
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: stevegood/legion-discord-bot:latest
 
       - name: Build and push tag
         uses: docker/build-push-action@v3
         with:
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: stevegood/legion-discord-bot:${{ github.ref_name }}
 
